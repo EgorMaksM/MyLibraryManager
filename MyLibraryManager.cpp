@@ -1,6 +1,13 @@
 #include <sqlite3.h>
 #include <iostream>
+#include <string>
 #include <string_view>
+
+int callback(void* data, int argc, char** argv, char** azColName);
+void printTable(sqlite3*& DB, std::string name);
+void initDB(sqlite3*& DB, char*& messageError);
+void IOHandle(sqlite3*& DB);
+void addBook(sqlite3*& DB, std::string title, unsigned short int year);
 
 // Part of code necessary for debug at this stage
 constexpr uint64_t hash(std::string_view str) {
@@ -23,23 +30,10 @@ int callback(void* data, int argc, char** argv, char** azColName) {
 	return 0;
 }
 
-void IOHandle() {
-	while (true) {
-		std::string input;
-		std::cin >> input;
-		switch (hash(input)) {
-		case "new"_hash:
-			std::string obj;
-			std::cin >> obj;
-			switch (hash(obj)) {
-			case "book"_hash:
-				std::cout << "{ADD A BOOK} => Input the name:";
-				break;
-			}
-			break;
-		}
-		break;
-	}
+void printTable(sqlite3*& DB, std::string name) {
+	char* messageError;
+	std::string sql1 = "SELECT * FROM " + name + ";";
+	int exit = sqlite3_exec(DB, sql1.c_str(), callback, 0, &messageError);
 }
 
 // Main part of code
@@ -51,7 +45,6 @@ void initDB(sqlite3*& DB, char*& messageError) {
 	std::string sql_books = "CREATE TABLE IF NOT EXISTS BOOKS("
 		"ID INTEGER PRIMARY KEY AUTOINCREMENT, "
 		"TITLE      TINYTEXT NOT NULL, "
-		"AUTHOR     TINYTEXT NOT NULL, "
 		"YEAR       INT UNSIGNED NOT NULL);";
 
 	std::string sql_authors = "CREATE TABLE IF NOT EXISTS AUTHORS("
@@ -101,34 +94,71 @@ void initDB(sqlite3*& DB, char*& messageError) {
 	}
 }
 
-int main() {
-	sqlite3* DB;
+void IOHandle(sqlite3*& DB) {
+	while (true) {
+		std::string input;
+		std::cin >> input;
+		switch (hash(input)) {
+		case "n_b"_hash: {
+			std::string title;
+			int year;
+			std::cout << "Input book's title:\n";
+			std::cin.ignore();
+			std::getline(std::cin, title);
+			std::cout << "Input book's year of publication:\n";
+			std::cin >> year;
+			addBook(DB, title, year);
+			break;
+		}
+		case "end"_hash: {
+			sqlite3_close(DB);
+			exit(0);
+			break;
+		}
+		}
+	}
+}
+
+void addBook(sqlite3*& DB, std::string title, unsigned short int year) {
+	sqlite3_stmt* stmt;
 	char* messageError;
-
-	initDB(DB, messageError);
-
+	const char* sql = "INSERT INTO BOOKS (TITLE, YEAR) VALUES (?, ?);";
 	int exit = 0;
-	exit = sqlite3_open("library.db", &DB);
-
-	IOHandle();
-
-	std::string sql = "INSERT INTO BOOKS (TITLE, AUTHOR, YEAR) VALUES ('The Hobbit', 'J.R.R. Tolkien', 1937);";
-	exit = sqlite3_exec(DB, sql.c_str(), NULL, 0, &messageError);
 	if (exit != SQLITE_OK) {
-		std::cerr << "Error inserting data: " << messageError << "\n";
-		sqlite3_free(messageError);
+		std::cerr << "Error opening database: " << sqlite3_errmsg(DB) << "\n";
+		return;
+	}
+
+	// Prepare the SQL statement
+	exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+	if (exit != SQLITE_OK) {
+		std::cerr << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+		return;
+	}
+
+	// Bind the parameters to the statement
+	sqlite3_bind_text(stmt, 1, title.c_str(), -1, SQLITE_STATIC);
+	sqlite3_bind_int(stmt, 2, year);
+
+	exit = sqlite3_step(stmt);
+	if (exit != SQLITE_DONE) {
+		std::cerr << "Error executing SQL statement: " << sqlite3_errmsg(DB) << "\n";
 	}
 	else {
 		std::cout << "Book inserted successfully!" << "\n";
 	}
 
-	sql = "SELECT * FROM BOOKS;";
-	exit = sqlite3_exec(DB, sql.c_str(), callback, 0, &messageError);
-	if (exit != SQLITE_OK) {
-		std::cerr << "Error selecting data from BOOKS: " << messageError << "\n";
-		sqlite3_free(messageError);
-	}
+	sqlite3_finalize(stmt);
+	printTable(DB, "BOOKS");
+}
 
-    sqlite3_close(DB);
+int main() {
+	sqlite3* DB;
+	char* messageError;
+	int exit = 0;
+	initDB(DB, messageError);
+
+	IOHandle(DB);
+
     return 0;
 }
