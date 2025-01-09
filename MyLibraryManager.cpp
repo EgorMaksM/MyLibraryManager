@@ -2,6 +2,9 @@
 #include <iostream>
 #include <string>
 #include <string_view>
+#include <vector>
+#include <algorithm>
+#include <optional>
 
 int callback(void* data, int argc, char** argv, char** azColName);
 void printTable(sqlite3*& DB, std::string name);
@@ -9,10 +12,25 @@ void say(std::string x);
 void initDB(sqlite3*& DB, char*& messageError);
 void IOHandle(sqlite3*& DB);
 void addBook(sqlite3*& DB, std::string title, unsigned short int year);
-void addAuthor(sqlite3*& DB, std::string name, std::string surname, std::string bio, int birth_year, int death_year);
+void addAuthor(sqlite3*& DB, std::string forename, std::string surname, std::string bio, int birth_year, int death_year);
 void addGenre(sqlite3*& DB, std::string name);
 void linkAuthorToBook(sqlite3*& DB, int author_id, int book_id);
 void linkGenreToBook(sqlite3*& DB, int genre_id, int book_id);
+
+std::vector<int> getAuthorsByBookID(sqlite3*& DB, int book_id);
+std::vector<int> getBooksByAuthorID(sqlite3*& DB, int author_id);
+std::vector<int> getGenresByBookID(sqlite3*& DB, int book_id);
+std::vector<int> getBooksByGenreID(sqlite3*& DB, int genre_id);
+std::vector<int> getGenresByAuthorID(sqlite3*& DB, int author_id);
+
+std::optional<std::string> getBookName(sqlite3*& DB, int book_id);
+std::optional<unsigned short int> getBookYear(sqlite3*& DB, int book_id);
+std::optional<std::string> getAuthorForename(sqlite3*& DB, int author_id);
+std::optional<std::string> getAuthorSurname(sqlite3*& DB, int author_id);
+std::optional<std::string> getAuthorBio(sqlite3*& DB, int author_id);
+std::optional<std::string> getAuthorBirthDate(sqlite3*& DB, int author_id);
+std::optional<std::string> getAuthorDeathDate(sqlite3*& DB, int author_id);
+std::optional<std::string> getGenreName(sqlite3*& DB, int genre_id);
 
 // Part of code necessary for debug at this stage
 constexpr uint64_t hash(std::string_view str) {
@@ -64,7 +82,7 @@ void initDB(sqlite3*& DB, char*& messageError) {
 	std::string sql_authors = R"(
 		CREATE TABLE IF NOT EXISTS AUTHORS(
 		ID INTEGER PRIMARY KEY AUTOINCREMENT,
-		NAME       TINYTEXT NOT NULL,
+		FORENAME   TINYTEXT NOT NULL,
 		SURNAME    TINYTEXT NOT NULL,
 		BIO        TEXT,
 		BIRTH      INT NOT NULL,
@@ -152,20 +170,18 @@ void IOHandle(sqlite3*& DB) {
 			break;
 		}
 		case "n_a"_hash: {
-			std::string name, surname, bio;
+			std::string forename, surname, bio;
 			unsigned short int b_year, d_year;
-			say("Input author's name:");
+			say("Input author's forename:");
 			std::cin.ignore();
-			std::getline(std::cin, name);
+			std::getline(std::cin, forename);
 			say("Input author's surname:");
-			std::cin.ignore();
 			std::getline(std::cin, surname);
 			say("Input author's bio:");
-			std::cin.ignore();
 			std::getline(std::cin, bio);
 			say("Input author's dates of birth and death:");
 			std::cin >> b_year >> d_year;
-			addAuthor(DB, name, surname, bio, b_year, d_year);
+			addAuthor(DB, forename, surname, bio, b_year, d_year);
 			break;
 		}
 		case "n_g"_hash: {
@@ -194,6 +210,11 @@ void IOHandle(sqlite3*& DB) {
 			linkGenreToBook(DB, genre_id, book_id);
 			break;
 		}
+		case "a"_hash: {
+			std::vector<int> x = getGenresByBookID(DB, 1);
+			for (int i = 0; i < x.size(); i++) std::cout << x[i] + 1 << "\n";
+			break;
+		}
 		case "end"_hash: {
 			sqlite3_close(DB);
 			exit(0);
@@ -205,13 +226,8 @@ void IOHandle(sqlite3*& DB) {
 
 void addBook(sqlite3*& DB, std::string title, unsigned short int year) {
 	sqlite3_stmt* stmt;
-	char* messageError;
 	const char* sql = "INSERT INTO BOOKS (TITLE, YEAR) VALUES (?, ?);";
 	int exit = 0;
-	if (exit != SQLITE_OK) {
-		std::cerr << "Error opening database: " << sqlite3_errmsg(DB) << "\n";
-		return;
-	}
 
 	exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
 	if (exit != SQLITE_OK) {
@@ -234,15 +250,10 @@ void addBook(sqlite3*& DB, std::string title, unsigned short int year) {
 	printTable(DB, "BOOKS");
 }
 
-void addAuthor(sqlite3*& DB, std::string name, std::string surname, std::string bio, int birth_year, int death_year) {
+void addAuthor(sqlite3*& DB, std::string forename, std::string surname, std::string bio, int birth_year, int death_year) {
 	sqlite3_stmt* stmt;
-	char* messageError;
-	const char* sql = "INSERT INTO AUTHORS (NAME, SURNAME, BIO, BIRTH, DEATH) VALUES (?, ?, ?, ?, ?);";
+	const char* sql = "INSERT INTO AUTHORS (FORENAME, SURNAME, BIO, BIRTH, DEATH) VALUES (?, ?, ?, ?, ?);";
 	int exit = 0;
-	if (exit != SQLITE_OK) {
-		std::cerr << "Error opening database: " << sqlite3_errmsg(DB) << "\n";
-		return;
-	}
 
 	exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
 	if (exit != SQLITE_OK) {
@@ -250,7 +261,7 @@ void addAuthor(sqlite3*& DB, std::string name, std::string surname, std::string 
 		return;
 	}
 
-	sqlite3_bind_text(stmt, 1, name.c_str(), -1, SQLITE_STATIC);
+	sqlite3_bind_text(stmt, 1, forename.c_str(), -1, SQLITE_STATIC);
 	sqlite3_bind_text(stmt, 2, surname.c_str(), -1, SQLITE_STATIC);
 	sqlite3_bind_text(stmt, 3, bio.c_str(), -1, SQLITE_STATIC);
 	sqlite3_bind_int(stmt, 4, birth_year);
@@ -270,13 +281,8 @@ void addAuthor(sqlite3*& DB, std::string name, std::string surname, std::string 
 
 void addGenre(sqlite3*& DB, std::string name) {
 	sqlite3_stmt* stmt;
-	char* messageError;
 	const char* sql = "INSERT INTO GENRES (NAME) VALUES (?);";
 	int exit = 0;
-	if (exit != SQLITE_OK) {
-		std::cerr << "Error opening database: " << sqlite3_errmsg(DB) << "\n";
-		return;
-	}
 
 	exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
 	if (exit != SQLITE_OK) {
@@ -300,13 +306,8 @@ void addGenre(sqlite3*& DB, std::string name) {
 
 void linkAuthorToBook(sqlite3*& DB, int author_id, int book_id) {
 	sqlite3_stmt* stmt;
-	char* messageError;
 	const char* sql = "INSERT INTO BOOK_AUTHORS (BOOK_ID, AUTHOR_ID) VALUES (?, ?);";
 	int exit = 0;
-	if (exit != SQLITE_OK) {
-		std::cerr << "Error opening database: " << sqlite3_errmsg(DB) << "\n";
-		return;
-	}
 
 	exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
 	if (exit != SQLITE_OK) {
@@ -331,13 +332,8 @@ void linkAuthorToBook(sqlite3*& DB, int author_id, int book_id) {
 
 void linkGenreToBook(sqlite3*& DB, int genre_id, int book_id) {
 	sqlite3_stmt* stmt;
-	char* messageError;
 	const char* sql = "INSERT INTO BOOK_GENRES (BOOK_ID, GENRE_ID) VALUES (?, ?);";
 	int exit = 0;
-	if (exit != SQLITE_OK) {
-		std::cerr << "Error opening database: " << sqlite3_errmsg(DB) << "\n";
-		return;
-	}
 
 	exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
 	if (exit != SQLITE_OK) {
@@ -358,6 +354,244 @@ void linkGenreToBook(sqlite3*& DB, int genre_id, int book_id) {
 
 	sqlite3_finalize(stmt);
 	printTable(DB, "BOOK_GENRES");
+}
+
+
+std::vector<int> getAuthorsByBookID(sqlite3*& DB, int book_id) {
+	sqlite3_stmt* stmt;
+	const char* sql = R"(
+		SELECT BOOK_AUTHORS.AUTHOR_ID
+		FROM BOOK_AUTHORS
+		WHERE BOOK_AUTHORS.BOOK_ID = ?;
+	)";
+	int exit = 0;
+
+	exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+	sqlite3_bind_int(stmt, 1, book_id);
+
+	std::vector<int> result;
+	while ((exit = sqlite3_step(stmt)) == SQLITE_ROW) {
+		result.push_back(sqlite3_column_int(stmt, 0));
+	}
+	sqlite3_finalize(stmt);
+	return result;
+}
+
+std::vector<int> getBooksByAuthorID(sqlite3*& DB, int author_id) {
+	sqlite3_stmt* stmt;
+	const char* sql = R"(
+		SELECT BOOK_AUTHORS.BOOK_ID
+		FROM BOOK_AUTHORS
+		WHERE BOOK_AUTHORS.AUTHOR_ID = ?;
+	)";
+	int exit = 0;
+
+	exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+	sqlite3_bind_int(stmt, 1, author_id);
+
+	std::vector<int> result;
+	while ((exit = sqlite3_step(stmt)) == SQLITE_ROW) {
+		result.push_back(sqlite3_column_int(stmt, 0));
+	}
+	sqlite3_finalize(stmt);
+	return result;
+}
+
+std::vector<int> getGenresByBookID(sqlite3*& DB, int book_id) {
+	sqlite3_stmt* stmt;
+	const char* sql = R"(
+		SELECT BOOK_GENRES.GENRE_ID
+		FROM BOOK_GENRES
+		WHERE BOOK_GENRES.BOOK_ID = ?;
+	)";
+	int exit = 0;
+
+	exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+	sqlite3_bind_int(stmt, 1, book_id);
+
+	std::vector<int> result;
+	while ((exit = sqlite3_step(stmt)) == SQLITE_ROW) {
+		result.push_back(sqlite3_column_int(stmt, 0));
+	}
+	sqlite3_finalize(stmt);
+	return result;
+}
+
+std::vector<int> getBooksByGenreID(sqlite3*& DB, int genre_id) {
+	sqlite3_stmt* stmt;
+	const char* sql = R"(
+		SELECT BOOK_GENRES.BOOK_ID
+		FROM BOOK_GENRES
+		WHERE BOOK_GENRES.GENRE_ID = ?;
+	)";
+	int exit = 0;
+
+	exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+	sqlite3_bind_int(stmt, 1, genre_id);
+
+	std::vector<int> result;
+	while ((exit = sqlite3_step(stmt)) == SQLITE_ROW) {
+		result.push_back(sqlite3_column_int(stmt, 0));
+	}
+	sqlite3_finalize(stmt);
+	return result;
+}
+
+std::vector<int> getGenresByAuthorID(sqlite3*& DB, int author_id) {
+	std::vector<int> books = getBooksByAuthorID(DB, author_id);
+	std::vector<int> result;
+	for (int i = 0; i < books.size(); i++) {
+		std::vector<int> genres = getGenresByBookID(DB, books[i]);
+		for (int j = 0; j < genres.size(); j++) {
+			if (std::find(result.begin(), result.end(), genres[j]) == result.end())
+				result.push_back(genres[j]);
+		}
+	}
+	return result;
+}
+
+
+std::optional<std::string> getBookName(sqlite3*& DB, int book_id) {
+	sqlite3_stmt* stmt;
+	const char* sql = "SELECT TITLE FROM BOOKS WHERE ID = ?;";
+
+	int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+	sqlite3_bind_int(stmt, 1, book_id);
+
+	std::optional<std::string> result;
+	if (sqlite3_step(stmt) == SQLITE_ROW)
+		result = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+	else
+		result = std::nullopt;
+	sqlite3_finalize(stmt);
+	return result;
+}
+
+std::optional<unsigned short int> getBookYear(sqlite3*& DB, int book_id) {
+	sqlite3_stmt* stmt;
+	const char* sql = "SELECT YEAR FROM BOOKS WHERE ID = ?;";
+
+	int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+	sqlite3_bind_int(stmt, 1, book_id);
+
+	std::optional<unsigned short int> result;
+	if (sqlite3_step(stmt) == SQLITE_ROW)
+		result = sqlite3_column_int(stmt, 0);
+	else
+		result = std::nullopt;
+	sqlite3_finalize(stmt);
+	return result;
+}
+
+std::optional<std::string> getAuthorForename(sqlite3*& DB, int author_id) {
+	sqlite3_stmt* stmt;
+	const char* sql = "SELECT FORENAME FROM AUTHORS WHERE ID = ?;";
+
+	int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+	sqlite3_bind_int(stmt, 1, author_id);
+
+	std::optional<std::string> result;
+	if (sqlite3_step(stmt) == SQLITE_ROW)
+		result = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+	else
+		result = std::nullopt;
+	sqlite3_finalize(stmt);
+	return result;
+}
+
+std::optional<std::string> getAuthorSurname(sqlite3*& DB, int author_id) {
+	sqlite3_stmt* stmt;
+	const char* sql = "SELECT SURNAME FROM AUTHORS WHERE ID = ?;";
+
+	int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+	sqlite3_bind_int(stmt, 1, author_id);
+
+	std::optional<std::string> result;
+	if (sqlite3_step(stmt) == SQLITE_ROW)
+		result = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+	else
+		result = std::nullopt;
+	sqlite3_finalize(stmt);
+	return result;
+}
+
+std::optional<std::string> getAuthorBio(sqlite3*& DB, int author_id) {
+	sqlite3_stmt* stmt;
+	const char* sql = "SELECT BIO FROM AUTHORS WHERE ID = ?;";
+
+	int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+	sqlite3_bind_int(stmt, 1, author_id);
+
+	std::optional<std::string> result;
+	if (sqlite3_step(stmt) == SQLITE_ROW)
+		result = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+	else
+		result = std::nullopt;
+	sqlite3_finalize(stmt);
+	return result;
+}
+
+std::optional<std::string> getAuthorBirthDate(sqlite3*& DB, int author_id) {
+	sqlite3_stmt* stmt;
+	const char* sql = "SELECT BIRTH_DATE FROM AUTHORS WHERE ID = ?;";
+
+	int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+	sqlite3_bind_int(stmt, 1, author_id);
+
+	std::optional<std::string> result;
+	if (sqlite3_step(stmt) == SQLITE_ROW)
+		result = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+	else
+		result = std::nullopt;
+	sqlite3_finalize(stmt);
+	return result;
+}
+
+std::optional<std::string> getAuthorDeathDate(sqlite3*& DB, int author_id) {
+	sqlite3_stmt* stmt;
+	const char* sql = "SELECT DEATH_DATE FROM AUTHORS WHERE ID = ?;";
+
+	int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+	sqlite3_bind_int(stmt, 1, author_id);
+
+	std::optional<std::string> result;
+	if (sqlite3_step(stmt) == SQLITE_ROW) {
+		const char* dateStr = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+		(dateStr == nullptr) ? std::nullopt : std::make_optional(std::string(dateStr));
+	}
+	else
+		result = std::nullopt;
+
+	sqlite3_finalize(stmt);
+	return result;
+}
+
+std::optional<std::string> getGenreName(sqlite3*& DB, int genre_id) {
+	sqlite3_stmt* stmt;
+	const char* sql = "SELECT NAME FROM GENRES WHERE ID = ?;";
+
+	int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+	sqlite3_bind_int(stmt, 1, genre_id);
+
+	std::optional<std::string> result;
+	if (sqlite3_step(stmt) == SQLITE_ROW)
+		result = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+	else
+		result = std::nullopt;
+	sqlite3_finalize(stmt);
+	return result;
 }
 
 int main() {
