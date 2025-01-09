@@ -11,6 +11,8 @@ void IOHandle(sqlite3*& DB);
 void addBook(sqlite3*& DB, std::string title, unsigned short int year);
 void addAuthor(sqlite3*& DB, std::string name, std::string surname, std::string bio, int birth_year, int death_year);
 void addGenre(sqlite3*& DB, std::string name);
+void linkAuthorToBook(sqlite3*& DB, int author_id, int book_id);
+void linkGenreToBook(sqlite3*& DB, int genre_id, int book_id);
 
 // Part of code necessary for debug at this stage
 constexpr uint64_t hash(std::string_view str) {
@@ -115,6 +117,14 @@ void initDB(sqlite3*& DB, char*& messageError) {
 	}
 }
 
+/*
+// n_b - Add new book
+// n_a - Add new author
+// n_g - Add new genre
+// link_b_a - Link an author and a book
+// link_b_g - Link a genre and a book
+// end - Close program
+*/
 void IOHandle(sqlite3*& DB) {
 	while (true) {
 		std::string input;
@@ -150,9 +160,28 @@ void IOHandle(sqlite3*& DB) {
 		}
 		case "n_g"_hash: {
 			std::string name;
+			say("Input genre's name:");
 			std::cin.ignore();
 			std::getline(std::cin, name);
 			addGenre(DB, name);
+			break;
+		}
+		case "link_b_a"_hash: {
+			int book_id, author_id;
+			say("Input book's ID:");
+			std::cin >> book_id;
+			say("Input author's ID:");
+			std::cin >> author_id;
+			linkAuthorToBook(DB, author_id, book_id);
+			break;
+		}
+		case "link_b_g"_hash: {
+			int book_id, genre_id;
+			say("Input book's ID:");
+			std::cin >> book_id;
+			say("Input author's ID:");
+			std::cin >> genre_id;
+			linkGenreToBook(DB, genre_id, book_id);
 			break;
 		}
 		case "end"_hash: {
@@ -257,6 +286,68 @@ void addGenre(sqlite3*& DB, std::string name) {
 
 	sqlite3_finalize(stmt);
 	printTable(DB, "GENRES");
+}
+
+void linkAuthorToBook(sqlite3*& DB, int author_id, int book_id) {
+	sqlite3_stmt* stmt;
+	char* messageError;
+	const char* sql = "INSERT INTO BOOK_AUTHORS (BOOK_ID, AUTHOR_ID) VALUES (?, ?);";
+	int exit = 0;
+	if (exit != SQLITE_OK) {
+		std::cerr << "Error opening database: " << sqlite3_errmsg(DB) << "\n";
+		return;
+	}
+
+	exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+	if (exit != SQLITE_OK) {
+		std::cerr << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+		return;
+	}
+
+	sqlite3_bind_int(stmt, 1, book_id);
+	sqlite3_bind_int(stmt, 2, author_id);
+
+	exit = sqlite3_step(stmt);
+	if (exit != SQLITE_DONE) {
+		std::cerr << "Error executing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+	}
+	else {
+		say("Book<->Author relationship inserted successfully!");
+	}
+
+	sqlite3_finalize(stmt);
+	printTable(DB, "BOOK_AUTHORS");
+}
+
+void linkGenreToBook(sqlite3*& DB, int genre_id, int book_id) {
+	sqlite3_stmt* stmt;
+	char* messageError;
+	const char* sql = "INSERT INTO BOOK_GENRES (BOOK_ID, GENRE_ID) VALUES (?, ?);";
+	int exit = 0;
+	if (exit != SQLITE_OK) {
+		std::cerr << "Error opening database: " << sqlite3_errmsg(DB) << "\n";
+		return;
+	}
+
+	exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+	if (exit != SQLITE_OK) {
+		std::cerr << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+		return;
+	}
+
+	sqlite3_bind_int(stmt, 1, book_id);
+	sqlite3_bind_int(stmt, 2, genre_id);
+
+	exit = sqlite3_step(stmt);
+	if (exit != SQLITE_DONE) {
+		std::cerr << "Error executing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+	}
+	else {
+		say("Book<->Genre relationship inserted successfully!");
+	}
+
+	sqlite3_finalize(stmt);
+	printTable(DB, "BOOK_GENRES");
 }
 
 int main() {
