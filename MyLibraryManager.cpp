@@ -5,9 +5,12 @@
 
 int callback(void* data, int argc, char** argv, char** azColName);
 void printTable(sqlite3*& DB, std::string name);
+void say(std::string x);
 void initDB(sqlite3*& DB, char*& messageError);
 void IOHandle(sqlite3*& DB);
 void addBook(sqlite3*& DB, std::string title, unsigned short int year);
+void addAuthor(sqlite3*& DB, std::string name, std::string surname, std::string bio, int birth_year, int death_year);
+void addGenre(sqlite3*& DB, std::string name);
 
 // Part of code necessary for debug at this stage
 constexpr uint64_t hash(std::string_view str) {
@@ -36,6 +39,13 @@ void printTable(sqlite3*& DB, std::string name) {
 	int exit = sqlite3_exec(DB, sql1.c_str(), callback, 0, &messageError);
 }
 
+void say(std::string x) {
+	for (int i = 0; i < x.length() + 4; i++) std::cout << "-";
+	std::cout << "\n| " << x << " |\n";
+	for (int i = 0; i < x.length() + 4; i++) std::cout << "-";
+	std::cout << "\n";
+}
+
 // Main part of code
 void initDB(sqlite3*& DB, char*& messageError) {
 
@@ -52,8 +62,8 @@ void initDB(sqlite3*& DB, char*& messageError) {
 		"NAME       TINYTEXT NOT NULL, "
 		"SURNAME    TINYTEXT NOT NULL, "
 		"BIO        TEXT, "
-		"BIRTH      DATE NOT NULL, "
-		"DEATH      DATE);";
+		"BIRTH      INT NOT NULL, "
+		"DEATH      INT);";
 
 	std::string sql_book_authors = "CREATE TABLE IF NOT EXISTS BOOK_AUTHORS("
 		"ID INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -79,7 +89,18 @@ void initDB(sqlite3*& DB, char*& messageError) {
 		std::cerr << "Error in create BOOKS." << "\n";
 		sqlite3_free(messageError);
 	}
-	else std::cout << "BOOKS created Successfully" << "\n";
+
+	exit = sqlite3_exec(DB, sql_authors.c_str(), NULL, 0, &messageError);
+	if (exit != SQLITE_OK) {
+		std::cerr << "Error in create AUTHORS." << "\n";
+		sqlite3_free(messageError);
+	}
+
+	exit = sqlite3_exec(DB, sql_book_authors.c_str(), NULL, 0, &messageError);
+	if (exit != SQLITE_OK) {
+		std::cerr << "Error in create BOOK_AUTHORS." << "\n";
+		sqlite3_free(messageError);
+	}
 
 	exit = sqlite3_exec(DB, sql_genres.c_str(), NULL, 0, &messageError);
 	if (exit != SQLITE_OK) {
@@ -102,12 +123,36 @@ void IOHandle(sqlite3*& DB) {
 		case "n_b"_hash: {
 			std::string title;
 			int year;
-			std::cout << "Input book's title:\n";
+			say("Input book's title:");
 			std::cin.ignore();
 			std::getline(std::cin, title);
-			std::cout << "Input book's year of publication:\n";
+			say("Input book's year of publication:");
 			std::cin >> year;
 			addBook(DB, title, year);
+			break;
+		}
+		case "n_a"_hash: {
+			std::string name, surname, bio;
+			unsigned short int b_year, d_year;
+			say("Input author's name:");
+			std::cin.ignore();
+			std::getline(std::cin, name);
+			say("Input author's surname:");
+			std::cin.ignore();
+			std::getline(std::cin, surname);
+			say("Input author's bio:");
+			std::cin.ignore();
+			std::getline(std::cin, bio);
+			say("Input author's dates of birth and death:");
+			std::cin >> b_year >> d_year;
+			addAuthor(DB, name, surname, bio, b_year, d_year);
+			break;
+		}
+		case "n_g"_hash: {
+			std::string name;
+			std::cin.ignore();
+			std::getline(std::cin, name);
+			addGenre(DB, name);
 			break;
 		}
 		case "end"_hash: {
@@ -129,14 +174,12 @@ void addBook(sqlite3*& DB, std::string title, unsigned short int year) {
 		return;
 	}
 
-	// Prepare the SQL statement
 	exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
 	if (exit != SQLITE_OK) {
 		std::cerr << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
 		return;
 	}
 
-	// Bind the parameters to the statement
 	sqlite3_bind_text(stmt, 1, title.c_str(), -1, SQLITE_STATIC);
 	sqlite3_bind_int(stmt, 2, year);
 
@@ -145,11 +188,75 @@ void addBook(sqlite3*& DB, std::string title, unsigned short int year) {
 		std::cerr << "Error executing SQL statement: " << sqlite3_errmsg(DB) << "\n";
 	}
 	else {
-		std::cout << "Book inserted successfully!" << "\n";
+		say("Book inserted successfully!");
 	}
 
 	sqlite3_finalize(stmt);
 	printTable(DB, "BOOKS");
+}
+
+void addAuthor(sqlite3*& DB, std::string name, std::string surname, std::string bio, int birth_year, int death_year) {
+	sqlite3_stmt* stmt;
+	char* messageError;
+	const char* sql = "INSERT INTO AUTHORS (NAME, SURNAME, BIO, BIRTH, DEATH) VALUES (?, ?, ?, ?, ?);";
+	int exit = 0;
+	if (exit != SQLITE_OK) {
+		std::cerr << "Error opening database: " << sqlite3_errmsg(DB) << "\n";
+		return;
+	}
+
+	exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+	if (exit != SQLITE_OK) {
+		std::cerr << "Error preparing SQL statement1: " << sqlite3_errmsg(DB) << "\n";
+		return;
+	}
+
+	sqlite3_bind_text(stmt, 1, name.c_str(), -1, SQLITE_STATIC);
+	sqlite3_bind_text(stmt, 2, surname.c_str(), -1, SQLITE_STATIC);
+	sqlite3_bind_text(stmt, 3, bio.c_str(), -1, SQLITE_STATIC);
+	sqlite3_bind_int(stmt, 4, birth_year);
+	sqlite3_bind_int(stmt, 5, death_year);
+
+	exit = sqlite3_step(stmt);
+	if (exit != SQLITE_DONE) {
+		std::cerr << "Error executing SQL statement2: " << sqlite3_errmsg(DB) << "\n";
+	}
+	else {
+		say("Author inserted successfully!");
+	}
+
+	sqlite3_finalize(stmt);
+	printTable(DB, "AUTHORS");
+}
+
+void addGenre(sqlite3*& DB, std::string name) {
+	sqlite3_stmt* stmt;
+	char* messageError;
+	const char* sql = "INSERT INTO GENRES (NAME) VALUES (?);";
+	int exit = 0;
+	if (exit != SQLITE_OK) {
+		std::cerr << "Error opening database: " << sqlite3_errmsg(DB) << "\n";
+		return;
+	}
+
+	exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+	if (exit != SQLITE_OK) {
+		std::cerr << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+		return;
+	}
+
+	sqlite3_bind_text(stmt, 1, name.c_str(), -1, SQLITE_STATIC);
+
+	exit = sqlite3_step(stmt);
+	if (exit != SQLITE_DONE) {
+		std::cerr << "Error executing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+	}
+	else {
+		say("Genre inserted successfully!");
+	}
+
+	sqlite3_finalize(stmt);
+	printTable(DB, "GENRES");
 }
 
 int main() {
