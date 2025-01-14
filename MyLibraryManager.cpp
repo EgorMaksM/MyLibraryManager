@@ -4,7 +4,6 @@
 #include <string_view>
 #include <vector>
 #include <algorithm>
-#include <optional>
 
 int callback(void* data, int argc, char** argv, char** azColName);
 void printTable(sqlite3*& DB, std::string name);
@@ -28,14 +27,10 @@ std::vector<int> getBooksByGenreID(sqlite3*& DB, int genre_id);
 std::vector<int> getGenresByAuthorID(sqlite3*& DB, int author_id);
 std::vector<int> getBooksByUserID(sqlite3*& DB, int user_id);
 
-std::optional<std::string> getBookName(sqlite3*& DB, int book_id);
-std::optional<unsigned short int> getBookYear(sqlite3*& DB, int book_id);
-std::optional<std::string> getAuthorForename(sqlite3*& DB, int author_id);
-std::optional<std::string> getAuthorSurname(sqlite3*& DB, int author_id);
-std::optional<std::string> getAuthorBio(sqlite3*& DB, int author_id);
-std::optional<std::string> getAuthorBirthDate(sqlite3*& DB, int author_id);
-std::optional<std::string> getAuthorDeathDate(sqlite3*& DB, int author_id);
-std::optional<std::string> getGenreName(sqlite3*& DB, int genre_id);
+bool getBookByID(sqlite3*& DB, int book_id, Book& book);
+bool getAuthorByID(sqlite3*& DB, int author_id, Author& author);
+bool getGenreByID(sqlite3*& DB, int genre_id, Genre& genre);
+bool getUserByID(sqlite3*& DB, int user_id, User& user);
 
 bool setBookName(sqlite3*& DB, int book_id, std::string newName);
 bool setBookYear(sqlite3*& DB, int book_id, unsigned short int newYear);
@@ -71,11 +66,12 @@ struct Author {
 	int id;
 	std::string forename;
 	std::string surname;
+	std::string bio;
 	std::string birth;
 	std::string death = "";
 
-	Author(int id, const std::string& forename, const std::string& surname, const std::string& birth, const std::string& death)
-		: id(id), forename(forename), surname(surname), birth(birth), death(death)
+	Author(int id, const std::string& forename, const std::string& surname, const std::string& bio, const std::string& birth, const std::string& death)
+		: id(id), forename(forename), surname(surname), bio(bio), birth(birth), death(death)
 	{
 	}
 };
@@ -724,130 +720,48 @@ std::vector<int> getBooksByUserID(sqlite3*& DB, int user_id) {
 }
 
 
-std::optional<std::string> getBookName(sqlite3*& DB, int book_id) {
+bool getBookByID(sqlite3*& DB, int book_id, Book& book) {
 	sqlite3_stmt* stmt;
-	const char* sql = "SELECT TITLE FROM BOOKS WHERE ID = ?;";
+	const char* sql = "SELECT TITLE, YEAR FROM BOOKS WHERE ID = ?;";
 
 	int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
 
 	sqlite3_bind_int(stmt, 1, book_id);
 
-	std::optional<std::string> result;
-	if (sqlite3_step(stmt) == SQLITE_ROW)
-		result = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-	else
-		result = std::nullopt;
-	sqlite3_finalize(stmt);
-	return result;
-}
-
-std::optional<unsigned short int> getBookYear(sqlite3*& DB, int book_id) {
-	sqlite3_stmt* stmt;
-	const char* sql = "SELECT YEAR FROM BOOKS WHERE ID = ?;";
-
-	int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
-
-	sqlite3_bind_int(stmt, 1, book_id);
-
-	std::optional<unsigned short int> result;
-	if (sqlite3_step(stmt) == SQLITE_ROW)
-		result = sqlite3_column_int(stmt, 0);
-	else
-		result = std::nullopt;
-	sqlite3_finalize(stmt);
-	return result;
-}
-
-std::optional<std::string> getAuthorForename(sqlite3*& DB, int author_id) {
-	sqlite3_stmt* stmt;
-	const char* sql = "SELECT FORENAME FROM AUTHORS WHERE ID = ?;";
-
-	int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
-
-	sqlite3_bind_int(stmt, 1, author_id);
-
-	std::optional<std::string> result;
-	if (sqlite3_step(stmt) == SQLITE_ROW)
-		result = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-	else
-		result = std::nullopt;
-	sqlite3_finalize(stmt);
-	return result;
-}
-
-std::optional<std::string> getAuthorSurname(sqlite3*& DB, int author_id) {
-	sqlite3_stmt* stmt;
-	const char* sql = "SELECT SURNAME FROM AUTHORS WHERE ID = ?;";
-
-	int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
-
-	sqlite3_bind_int(stmt, 1, author_id);
-
-	std::optional<std::string> result;
-	if (sqlite3_step(stmt) == SQLITE_ROW)
-		result = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-	else
-		result = std::nullopt;
-	sqlite3_finalize(stmt);
-	return result;
-}
-
-std::optional<std::string> getAuthorBio(sqlite3*& DB, int author_id) {
-	sqlite3_stmt* stmt;
-	const char* sql = "SELECT BIO FROM AUTHORS WHERE ID = ?;";
-
-	int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
-
-	sqlite3_bind_int(stmt, 1, author_id);
-
-	std::optional<std::string> result;
-	if (sqlite3_step(stmt) == SQLITE_ROW)
-		result = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-	else
-		result = std::nullopt;
-	sqlite3_finalize(stmt);
-	return result;
-}
-
-std::optional<std::string> getAuthorBirthDate(sqlite3*& DB, int author_id) {
-	sqlite3_stmt* stmt;
-	const char* sql = "SELECT BIRTH_DATE FROM AUTHORS WHERE ID = ?;";
-
-	int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
-
-	sqlite3_bind_int(stmt, 1, author_id);
-
-	std::optional<std::string> result;
-	if (sqlite3_step(stmt) == SQLITE_ROW)
-		result = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-	else
-		result = std::nullopt;
-	sqlite3_finalize(stmt);
-	return result;
-}
-
-std::optional<std::string> getAuthorDeathDate(sqlite3*& DB, int author_id) {
-	sqlite3_stmt* stmt;
-	const char* sql = "SELECT DEATH_DATE FROM AUTHORS WHERE ID = ?;";
-
-	int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
-
-	sqlite3_bind_int(stmt, 1, author_id);
-
-	std::optional<std::string> result;
 	if (sqlite3_step(stmt) == SQLITE_ROW) {
-		const char* dateStr = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-		if (dateStr == nullptr) result = std::optional<std::string>(std::nullopt);
-		else result = std::string(dateStr);
+		const char* title = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+		int year = sqlite3_column_int(stmt, 1);
+		book = Book(book_id, title, year);
+		sqlite3_finalize(stmt);
+		return true;
 	}
-	else
-		result = std::nullopt;
-
 	sqlite3_finalize(stmt);
-	return result;
+	return false;
 }
 
-std::optional<std::string> getGenreName(sqlite3*& DB, int genre_id) {
+bool getAuthorByID(sqlite3*& DB, int author_id, Author& author) {
+	sqlite3_stmt* stmt;
+	const char* sql = "SELECT FORENAME, SURNAME, BIO, BIRTH, DEATH FROM AUTHORS WHERE ID = ?;";
+
+	int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+	sqlite3_bind_int(stmt, 1, author_id);
+
+	if (sqlite3_step(stmt) == SQLITE_ROW) {
+		const char* forename = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+		const char* surname = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+		const char* bio = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+		const char* birth = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+		const char* death = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+		author = Author(author_id, forename, surname, bio, birth, death);
+		sqlite3_finalize(stmt);
+		return true;
+	}
+	sqlite3_finalize(stmt);
+	return false;
+}
+
+bool getGenreByID(sqlite3*& DB, int genre_id, Genre& genre) {
 	sqlite3_stmt* stmt;
 	const char* sql = "SELECT NAME FROM GENRES WHERE ID = ?;";
 
@@ -855,14 +769,38 @@ std::optional<std::string> getGenreName(sqlite3*& DB, int genre_id) {
 
 	sqlite3_bind_int(stmt, 1, genre_id);
 
-	std::optional<std::string> result;
-	if (sqlite3_step(stmt) == SQLITE_ROW)
-		result = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-	else
-		result = std::nullopt;
+	if (sqlite3_step(stmt) == SQLITE_ROW) {
+		const char* name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+		genre = Genre(genre_id, name);
+		sqlite3_finalize(stmt);
+		return true;
+	}
 	sqlite3_finalize(stmt);
-	return result;
+	return false;
 }
+
+bool getUserByID(sqlite3*& DB, int user_id, User& user) {
+	sqlite3_stmt* stmt;
+	const char* sql = "SELECT FORENAME, SURNAME, BIRTH, EMAIL, PHONE FROM USERS WHERE ID = ?;";
+
+	int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+	sqlite3_bind_int(stmt, 1, user_id);
+
+	if (sqlite3_step(stmt) == SQLITE_ROW) {
+		const char* forename = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+		const char* surname = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+		const char* birth = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+		const char* email = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+		const char* phone = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+		user = User(user_id, forename, surname, birth, email, phone);
+		sqlite3_finalize(stmt);
+		return true;
+	}
+	sqlite3_finalize(stmt);
+	return false;
+}
+
 
 bool setBookName(sqlite3*& DB, int book_id, std::string newName) {
 	sqlite3_stmt* stmt;
@@ -1267,7 +1205,7 @@ void sortBooks(std::vector<Book>& books, Value value, bool bLess = true) {
 std::vector<Author> sortAuthors(sqlite3*& DB, Value value, bool bLess = true) {
 	std::vector<Author> authors;
 	sqlite3_stmt* stmt;
-	const char* sql = "SELECT ID, FORENAME, SURNAME, BIRTH_DATE, DEATH_DATE FROM AUTHORS;";
+	const char* sql = "SELECT ID, FORENAME, SURNAME, BIO, BIRTH_DATE, DEATH_DATE FROM AUTHORS;";
 
 	int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
 
@@ -1275,10 +1213,11 @@ std::vector<Author> sortAuthors(sqlite3*& DB, Value value, bool bLess = true) {
 		int id = sqlite3_column_int(stmt, 0);
 		const char* forename = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
 		const char* surname = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
-		const char* b_date = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
-		const char* d_date = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+		const char* bio = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+		const char* b_date = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+		const char* d_date = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
 
-		Author author(id, forename, surname, b_date, d_date);
+		Author author(id, forename, surname, bio, b_date, d_date);
 		authors.push_back(author);
 		sqlite3_finalize(stmt);
 	}
