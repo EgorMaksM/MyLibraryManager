@@ -10,10 +10,13 @@ CONFIG += c++17
 
 SOURCES += \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    sqlite3.c
 
 HEADERS += \
-    mainwindow.h
+    libmgr.h \
+    mainwindow.h \
+    sqlite3.h
 
 FORMS += \
     mainwindow.ui
