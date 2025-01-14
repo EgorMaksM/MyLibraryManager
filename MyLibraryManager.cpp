@@ -87,8 +87,7 @@ enum Value {
 	YEAR,
 	FORENAME,
 	SURNAME,
-	BIRTH,
-	DEATH,
+	AGE,
 	NAME
 };
 
@@ -1040,15 +1039,12 @@ std::vector<Author> sortAuthors(sqlite3*& DB, Value value, bool bLess = true) {
 			});
 		break;
 	}
-	case BIRTH: {
+	case AGE: {
 		std::sort(authors.begin(), authors.end(), [bLess](const Author& a, const Author& b) {
-			return bLess ? a.birth < b.birth : a.birth > b.birth;
-			});
-		break;
-	}
-	case DEATH: {
-		std::sort(authors.begin(), authors.end(), [bLess](const Author& a, const Author& b) {
-			return bLess ? a.death < b.death : a.death > b.death;
+			// Rework needed when moving to Qt
+			int ageA = a.death.length() > 0 ? a.death[0] : a.death[0] - a.birth[0];
+			int ageB = b.death.length() > 0 ? b.death[0] : b.death[0] - b.birth[0];
+			return bLess ? ageA < ageB : ageA > ageB;
 			});
 		break;
 	}
@@ -1080,15 +1076,12 @@ void sortAuthors(std::vector<Author>& authors, Value value, bool bLess = true) {
 			});
 		break;
 	}
-	case BIRTH: {
+	case AGE: {
 		std::sort(authors.begin(), authors.end(), [bLess](const Author& a, const Author& b) {
-			return bLess ? a.birth < b.birth : a.birth > b.birth;
-			});
-		break;
-	}
-	case DEATH: {
-		std::sort(authors.begin(), authors.end(), [bLess](const Author& a, const Author& b) {
-			return bLess ? a.death < b.death : a.death > b.death;
+			// Rework needed when moving to Qt
+			int ageA = a.death.length() > 0 ? a.death[0] : a.death[0] - a.birth[0];
+			int ageB = b.death.length() > 0 ? b.death[0] : b.death[0] - b.birth[0];
+			return bLess ? ageA < ageB : ageA > ageB;
 			});
 		break;
 	}
