@@ -16,7 +16,8 @@ void addAuthor(sqlite3*& DB, std::string forename, std::string surname, std::str
 void addGenre(sqlite3*& DB, std::string name);
 void linkAuthorToBook(sqlite3*& DB, int author_id, int book_id);
 void linkGenreToBook(sqlite3*& DB, int genre_id, int book_id);
-// ToDo: UNLINK FUNCTIONS
+bool unlinkAuthorFromBook(sqlite3*& DB, int author_id, int book_id);
+bool unlinkGenreFromBook(sqlite3*& DB, int genre_id, int book_id);
 
 std::vector<int> getAuthorsByBookID(sqlite3*& DB, int book_id);
 std::vector<int> getBooksByAuthorID(sqlite3*& DB, int author_id);
@@ -45,6 +46,58 @@ bool setGenreName(sqlite3*& DB, int genre_id, std::string newName);
 void deleteBookByID(sqlite3*& DB, int book_id);
 void deleteAuthorByID(sqlite3*& DB, int author_id);
 void deleteGenreByID(sqlite3*& DB, int genre_id);
+
+struct Book {
+	int id;
+	std::string title;
+	unsigned short int year;
+
+	Book(int id, const std::string& title, unsigned short int year)
+		: id(id), title(title), year(year)
+	{
+	}
+};
+
+struct Author {
+	int id;
+	std::string forename;
+	std::string surname;
+	std::string birth;
+	std::string death = "";
+
+	Author(int id, const std::string& forename, const std::string& surname, const std::string& birth, const std::string& death)
+		: id(id), forename(forename), surname(surname), birth(birth), death(death)
+	{
+	}
+};
+
+struct Genre {
+	int id;
+	std::string name;
+
+	Genre(int id, const std::string& name)
+		: id(id), name(name)
+	{
+	}
+};
+
+enum Value {
+	ID,
+	TITLE,
+	YEAR,
+	FORENAME,
+	SURNAME,
+	BIRTH,
+	DEATH,
+	NAME
+};
+
+std::vector<Book> sortBooks(sqlite3*& DB, Value value, bool bLess = true);
+void sortBooks(std::vector<Book>& books, Value value, bool bLess = true);
+std::vector<Author> sortAuthors(sqlite3*& DB, Value value, bool bLess = true);
+void sortAuthors(std::vector<Author>& authors, Value value, bool bLess = true);
+std::vector<Genre> sortGenres(sqlite3*& DB, Value value, bool bLess = true);
+void sortGenres(std::vector<Genre>& genres, Value value, bool bLess = true);
 
 // Part of code necessary for debug at this stage
 constexpr uint64_t hash(std::string_view str) {
@@ -372,6 +425,60 @@ void linkGenreToBook(sqlite3*& DB, int genre_id, int book_id) {
 	printTable(DB, "BOOK_GENRES");
 }
 
+bool unlinkAuthorFromBook(sqlite3*& DB, int author_id, int book_id) {
+	sqlite3_stmt* stmt;
+	const char* sql = R"(
+        DELETE FROM BOOK_AUTHORS
+        WHERE BOOK_ID = ? AND AUTHOR_ID = ?;
+    )";
+
+	int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, nullptr);
+	if (exit != SQLITE_OK) {
+		std::cerr << "Error preparing statement: " << sqlite3_errmsg(DB) << std::endl;
+		return false;
+	}
+
+	sqlite3_bind_int(stmt, 1, book_id);
+	sqlite3_bind_int(stmt, 2, author_id);
+
+	exit = sqlite3_step(stmt);
+	if (exit != SQLITE_DONE) {
+		std::cerr << "Error executing statement: " << sqlite3_errmsg(DB) << std::endl;
+		sqlite3_finalize(stmt);
+		return false;
+	}
+
+	sqlite3_finalize(stmt);
+	return true;
+}
+
+bool unlinkGenreFromBook(sqlite3*& DB, int genre_id, int book_id) {
+	sqlite3_stmt* stmt;
+	const char* sql = R"(
+        DELETE FROM BOOK_GENRES
+        WHERE BOOK_ID = ? AND GENRE_ID = ?;
+    )";
+
+	int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, nullptr);
+	if (exit != SQLITE_OK) {
+		std::cerr << "Error preparing statement: " << sqlite3_errmsg(DB) << std::endl;
+		return false;
+	}
+
+	sqlite3_bind_int(stmt, 1, book_id);
+	sqlite3_bind_int(stmt, 2, genre_id);
+
+	exit = sqlite3_step(stmt);
+	if (exit != SQLITE_DONE) {
+		std::cerr << "Error executing statement: " << sqlite3_errmsg(DB) << std::endl;
+		sqlite3_finalize(stmt);
+		return false;
+	}
+
+	sqlite3_finalize(stmt);
+	return true;
+}
+
 
 std::vector<int> getAuthorsByBookID(sqlite3*& DB, int book_id) {
 	sqlite3_stmt* stmt;
@@ -584,7 +691,8 @@ std::optional<std::string> getAuthorDeathDate(sqlite3*& DB, int author_id) {
 	std::optional<std::string> result;
 	if (sqlite3_step(stmt) == SQLITE_ROW) {
 		const char* dateStr = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-		(dateStr == nullptr) ? std::nullopt : std::make_optional(std::string(dateStr));
+		if (dateStr == nullptr) result = std::optional<std::string>(std::nullopt);
+		else result = std::string(dateStr);
 	}
 	else
 		result = std::nullopt;
@@ -821,6 +929,231 @@ void deleteGenreByID(sqlite3*& DB, int genre_id) {
 	}
 
 	sqlite3_finalize(stmt);
+}
+
+
+std::vector<Book> sortBooks(sqlite3*& DB, Value value, bool bLess = true) {
+	std::vector<Book> books;
+	sqlite3_stmt* stmt;
+	const char* sql = "SELECT ID, TITLE, AUTHOR, YEAR FROM BOOKS;";
+
+	int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+	while (sqlite3_step(stmt) == SQLITE_ROW) {
+		int id = sqlite3_column_int(stmt, 0);
+		const char* title = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+		const char* author = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+		int year = sqlite3_column_int(stmt, 3);
+
+		Book book(id, title, year);
+		books.push_back(book);
+		sqlite3_finalize(stmt);
+	}
+	switch (value) {
+	case ID: {
+		std::sort(books.begin(), books.end(), [bLess](const Book& a, const Book& b) {
+			return bLess ? a.id < b.id : a.id > b.id;
+			});
+		break;
+	}
+	case TITLE: {
+		std::sort(books.begin(), books.end(), [bLess](const Book& a, const Book& b) {
+			return bLess ? a.title < b.title : a.title > b.title;
+			});
+		break;
+	}
+	case YEAR: {
+		std::sort(books.begin(), books.end(), [bLess](const Book& a, const Book& b) {
+			return bLess ? a.year < b.year : a.year > b.year;
+			});
+		break;
+	}
+	default: {
+		say("WRONG VALUE FIELD");
+		break;
+	}
+	}
+	return books;
+}
+
+void sortBooks(std::vector<Book>& books, Value value, bool bLess = true) {
+	switch (value) {
+	case ID: {
+		std::sort(books.begin(), books.end(), [bLess](const Book& a, const Book& b) {
+			return bLess ? a.id < b.id : a.id > b.id;
+			});
+		break;
+	}
+	case TITLE: {
+		std::sort(books.begin(), books.end(), [bLess](const Book& a, const Book& b) {
+			return bLess ? a.title < b.title : a.title > b.title;
+			});
+		break;
+	}
+	case YEAR: {
+		std::sort(books.begin(), books.end(), [bLess](const Book& a, const Book& b) {
+			return bLess ? a.year < b.year : a.year > b.year;
+			});
+		break;
+	}
+	default: {
+		say("WRONG VALUE FIELD");
+		break;
+	}
+	}
+}
+
+std::vector<Author> sortAuthors(sqlite3*& DB, Value value, bool bLess = true) {
+	std::vector<Author> authors;
+	sqlite3_stmt* stmt;
+	const char* sql = "SELECT ID, FORENAME, SURNAME, BIRTH_DATE, DEATH_DATE FROM AUTHORS;";
+
+	int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+	while (sqlite3_step(stmt) == SQLITE_ROW) {
+		int id = sqlite3_column_int(stmt, 0);
+		const char* forename = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+		const char* surname = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+		const char* b_date = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+		const char* d_date = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+
+		Author author(id, forename, surname, b_date, d_date);
+		authors.push_back(author);
+		sqlite3_finalize(stmt);
+	}
+	switch (value) {
+	case ID: {
+		std::sort(authors.begin(), authors.end(), [bLess](const Author& a, const Author& b) {
+			return bLess ? a.id < b.id : a.id > b.id;
+			});
+		break;
+	}
+	case FORENAME: {
+		std::sort(authors.begin(), authors.end(), [bLess](const Author& a, const Author& b) {
+			return bLess ? a.forename < b.forename : a.forename > b.forename;
+			});
+		break;
+	}
+	case SURNAME: {
+		std::sort(authors.begin(), authors.end(), [bLess](const Author& a, const Author& b) {
+			return bLess ? a.surname < b.surname : a.surname > b.surname;
+			});
+		break;
+	}
+	case BIRTH: {
+		std::sort(authors.begin(), authors.end(), [bLess](const Author& a, const Author& b) {
+			return bLess ? a.birth < b.birth : a.birth > b.birth;
+			});
+		break;
+	}
+	case DEATH: {
+		std::sort(authors.begin(), authors.end(), [bLess](const Author& a, const Author& b) {
+			return bLess ? a.death < b.death : a.death > b.death;
+			});
+		break;
+	}
+	default: {
+		say("WRONG VALUE FIELD");
+		break;
+	}
+	}
+	return authors;
+}
+
+void sortAuthors(std::vector<Author>& authors, Value value, bool bLess = true) {
+	switch (value) {
+	case ID: {
+		std::sort(authors.begin(), authors.end(), [bLess](const Author& a, const Author& b) {
+			return bLess ? a.id < b.id : a.id > b.id;
+			});
+		break;
+	}
+	case FORENAME: {
+		std::sort(authors.begin(), authors.end(), [bLess](const Author& a, const Author& b) {
+			return bLess ? a.forename < b.forename : a.forename > b.forename;
+			});
+		break;
+	}
+	case SURNAME: {
+		std::sort(authors.begin(), authors.end(), [bLess](const Author& a, const Author& b) {
+			return bLess ? a.surname < b.surname : a.surname > b.surname;
+			});
+		break;
+	}
+	case BIRTH: {
+		std::sort(authors.begin(), authors.end(), [bLess](const Author& a, const Author& b) {
+			return bLess ? a.birth < b.birth : a.birth > b.birth;
+			});
+		break;
+	}
+	case DEATH: {
+		std::sort(authors.begin(), authors.end(), [bLess](const Author& a, const Author& b) {
+			return bLess ? a.death < b.death : a.death > b.death;
+			});
+		break;
+	}
+	default: {
+		say("WRONG VALUE FIELD");
+		break;
+	}
+	}
+}
+
+std::vector<Genre> sortGenres(sqlite3*& DB, Value value, bool bLess = true) {
+	std::vector<Genre> genres;
+	sqlite3_stmt* stmt;
+	const char* sql = "SELECT ID, NAME FROM GENRES;";
+
+	int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+	while (sqlite3_step(stmt) == SQLITE_ROW) {
+		int id = sqlite3_column_int(stmt, 0);
+		const char* name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+
+		Genre genre(id, name);
+		genres.push_back(genre);
+		sqlite3_finalize(stmt);
+	}
+	switch (value) {
+	case ID: {
+		std::sort(genres.begin(), genres.end(), [bLess](const Genre& a, const Genre& b) {
+			return bLess ? a.id < b.id : a.id > b.id;
+			});
+		break;
+	}
+	case NAME: {
+		std::sort(genres.begin(), genres.end(), [bLess](const Genre& a, const Genre& b) {
+			return bLess ? a.name < b.name : a.name > b.name;
+			});
+		break;
+	}
+	default: {
+		say("WRONG VALUE FIELD");
+		break;
+	}
+	}
+	return genres;
+}
+
+void sortGenres(std::vector<Genre>& genres, Value value, bool bLess = true) {
+	switch (value) {
+	case ID: {
+		std::sort(genres.begin(), genres.end(), [bLess](const Genre& a, const Genre& b) {
+			return bLess ? a.id < b.id : a.id > b.id;
+			});
+		break;
+	}
+	case NAME: {
+		std::sort(genres.begin(), genres.end(), [bLess](const Genre& a, const Genre& b) {
+			return bLess ? a.name < b.name : a.name > b.name;
+			});
+		break;
+	}
+	default: {
+		say("WRONG VALUE FIELD");
+		break;
+	}
+	}
 }
 
 int main() {
