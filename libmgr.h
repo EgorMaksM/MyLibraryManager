@@ -144,6 +144,8 @@ std::vector<Author> sortAuthors(sqlite3*& DB, Value value, bool bLess = true);
 void sortAuthors(std::vector<Author>& authors, Value value, bool bLess = true);
 std::vector<Genre> sortGenres(sqlite3*& DB, Value value, bool bLess = true);
 void sortGenres(std::vector<Genre>& genres, Value value, bool bLess = true);
+std::vector<User> sortUsers(sqlite3*& DB, Value value, bool bLess);
+void sortUsers(std::vector<User>& users, Value value, bool bLess);
 
 int callback(void* data, int argc, char** argv, char** azColName) {
     for (int i = 0; i < argc; i++) {
@@ -1386,5 +1388,91 @@ void sortGenres(std::vector<Genre>& genres, Value value, bool bLess) {
     }
     }
 }
+
+std::vector<User> sortUsers(sqlite3*& DB, Value value, bool bLess) {
+    std::vector<User> users;
+    sqlite3_stmt* stmt;
+    const char* sql = "SELECT ID, FORENAME, SURNAME, BIRTH, EMAIL, PHONE FROM USERS;";
+
+    int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int id = sqlite3_column_int(stmt, 0);
+        const char* forename = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        const char* surname = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        const char* birth = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+        const char* email = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+        const char* phone = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+
+        User user = User(id, forename, surname, stringToQDate(birth), email, phone);
+        users.push_back(user);
+    }
+    sqlite3_finalize(stmt);
+    switch (value) {
+    case ID: {
+        std::sort(users.begin(), users.end(), [bLess](const User& a, const User& b) {
+            return bLess ? a.id < b.id : a.id > b.id;
+        });
+        break;
+    }
+    case FORENAME: {
+        std::sort(users.begin(), users.end(), [bLess](const User& a, const User& b) {
+            return bLess ? a.forename < b.forename : a.forename > b.forename;
+        });
+        break;
+    }
+    case SURNAME: {
+        std::sort(users.begin(), users.end(), [bLess](const User& a, const User& b) {
+            return bLess ? a.surname < b.surname : a.surname > b.surname;
+        });
+        break;
+    }
+    case BIRTH: {
+        std::sort(users.begin(), users.end(), [bLess](const User& a, const User& b) {
+            return bLess ? a.birth < b.birth : a.birth > b.birth;
+        });
+        break;
+    }
+    default: {
+        say("WRONG VALUE FIELD");
+        break;
+    }
+    }
+    return users;
+}
+
+void sortUsers(std::vector<User>& users, Value value, bool bLess) {
+    switch (value) {
+    case ID: {
+        std::sort(users.begin(), users.end(), [bLess](const User& a, const User& b) {
+            return bLess ? a.id < b.id : a.id > b.id;
+        });
+        break;
+    }
+    case FORENAME: {
+        std::sort(users.begin(), users.end(), [bLess](const User& a, const User& b) {
+            return bLess ? a.forename < b.forename : a.forename > b.forename;
+        });
+        break;
+    }
+    case SURNAME: {
+        std::sort(users.begin(), users.end(), [bLess](const User& a, const User& b) {
+            return bLess ? a.surname < b.surname : a.surname > b.surname;
+        });
+        break;
+    }
+    case BIRTH: {
+        std::sort(users.begin(), users.end(), [bLess](const User& a, const User& b) {
+            return bLess ? a.birth < b.birth : a.birth > b.birth;
+        });
+        break;
+    }
+    default: {
+        say("WRONG VALUE FIELD");
+        break;
+    }
+    }
+}
+
 
 #endif // LIBMGR_H
