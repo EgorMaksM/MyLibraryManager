@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "libmgr.h"
 
 #include <QApplication>
 #include <QLocale>
@@ -7,6 +8,11 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+
+    sqlite3* DB;
+    char* messageError;
+    initDB(DB, messageError);
+
 
     QTranslator translator;
     const QStringList uiLanguages = QLocale::system().uiLanguages();
@@ -19,5 +25,6 @@ int main(int argc, char *argv[])
     }
     MainWindow w;
     w.show();
+
     return a.exec();
 }
