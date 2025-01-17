@@ -107,12 +107,12 @@ void linkGenreToBook(sqlite3*& DB, int genre_id, int book_id);
 bool unlinkAuthorFromBook(sqlite3*& DB, int author_id, int book_id);
 bool unlinkGenreFromBook(sqlite3*& DB, int genre_id, int book_id);
 
-std::vector<int> getAuthorsByBookID(sqlite3*& DB, int book_id);
-std::vector<int> getBooksByAuthorID(sqlite3*& DB, int author_id);
-std::vector<int> getGenresByBookID(sqlite3*& DB, int book_id);
-std::vector<int> getBooksByGenreID(sqlite3*& DB, int genre_id);
-std::vector<int> getGenresByAuthorID(sqlite3*& DB, int author_id);
-std::vector<int> getBooksByUserID(sqlite3*& DB, int user_id);
+bool getAuthorsByBookID(sqlite3*& DB, int book_id, std::vector<Author>& authors);
+bool getBooksByAuthorID(sqlite3*& DB, int author_id, std::vector<Book>& books);
+bool getGenresByBookID(sqlite3*& DB, int book_id, std::vector<Genre>& genres);
+bool getBooksByGenreID(sqlite3*& DB, int genre_id, std::vector<Book>& books);
+bool getGenresByAuthorID(sqlite3*& DB, int author_id, std::vector<Genre>& genres);
+bool getBooksByUserID(sqlite3*& DB, int user_id, std::vector<Book>& books);
 
 bool getBookByID(sqlite3*& DB, int book_id, Book& book);
 bool getAuthorByID(sqlite3*& DB, int author_id, Author& author);
@@ -620,7 +620,7 @@ bool unlinkGenreFromBook(sqlite3*& DB, int genre_id, int book_id) {
 }
 
 
-std::vector<int> getAuthorsByBookID(sqlite3*& DB, int book_id) {
+bool getAuthorsByBookID(sqlite3*& DB, int book_id, std::vector<Author>& authors) {
     sqlite3_stmt* stmt;
     const char* sql = R"(
         SELECT BOOK_AUTHORS.AUTHOR_ID
@@ -634,14 +634,20 @@ std::vector<int> getAuthorsByBookID(sqlite3*& DB, int book_id) {
     sqlite3_bind_int(stmt, 1, book_id);
 
     std::vector<int> result;
+    authors.clear();
     while ((exit = sqlite3_step(stmt)) == SQLITE_ROW) {
         result.push_back(sqlite3_column_int(stmt, 0));
     }
     sqlite3_finalize(stmt);
-    return result;
+    for (int i = 0; i < result.size(); i++) {
+        Author author;
+        if (!getAuthorByID(DB, result[i], author)) return false;
+        authors.push_back(author);
+    }
+    return true;
 }
 
-std::vector<int> getBooksByAuthorID(sqlite3*& DB, int author_id) {
+bool getBooksByAuthorID(sqlite3*& DB, int author_id, std::vector<Book>& books) {
     sqlite3_stmt* stmt;
     const char* sql = R"(
         SELECT BOOK_AUTHORS.BOOK_ID
@@ -659,10 +665,15 @@ std::vector<int> getBooksByAuthorID(sqlite3*& DB, int author_id) {
         result.push_back(sqlite3_column_int(stmt, 0));
     }
     sqlite3_finalize(stmt);
-    return result;
+    for (int i = 0; i < result.size(); i++) {
+        Book book;
+        if (!getBookByID(DB, result[i], book)) return false;
+        books.push_back(book);
+    }
+    return true;
 }
 
-std::vector<int> getGenresByBookID(sqlite3*& DB, int book_id) {
+bool getGenresByBookID(sqlite3*& DB, int book_id, std::vector<Genre>& genres) {
     sqlite3_stmt* stmt;
     const char* sql = R"(
         SELECT BOOK_GENRES.GENRE_ID
@@ -680,10 +691,15 @@ std::vector<int> getGenresByBookID(sqlite3*& DB, int book_id) {
         result.push_back(sqlite3_column_int(stmt, 0));
     }
     sqlite3_finalize(stmt);
-    return result;
+    for (int i = 0; i < result.size(); i++) {
+        Genre genre;
+        if (!getGenreByID(DB, result[i], genre)) return false;
+        genres.push_back(genre);
+    }
+    return true;
 }
 
-std::vector<int> getBooksByGenreID(sqlite3*& DB, int genre_id) {
+bool getBooksByGenreID(sqlite3*& DB, int genre_id, std::vector<Book>& books) {
     sqlite3_stmt* stmt;
     const char* sql = R"(
         SELECT BOOK_GENRES.BOOK_ID
@@ -701,23 +717,31 @@ std::vector<int> getBooksByGenreID(sqlite3*& DB, int genre_id) {
         result.push_back(sqlite3_column_int(stmt, 0));
     }
     sqlite3_finalize(stmt);
-    return result;
+    for (int i = 0; i < result.size(); i++) {
+        Book book;
+        if (!getBookByID(DB, result[i], book)) return false;
+        books.push_back(book);
+    }
+    return true;
 }
 
-std::vector<int> getGenresByAuthorID(sqlite3*& DB, int author_id) {
-    std::vector<int> books = getBooksByAuthorID(DB, author_id);
-    std::vector<int> result;
-    for (int i = 0; i < books.size(); i++) {
-        std::vector<int> genres = getGenresByBookID(DB, books[i]);
-        for (int j = 0; j < genres.size(); j++) {
-            if (std::find(result.begin(), result.end(), genres[j]) == result.end())
-                result.push_back(genres[j]);
+bool getGenresByAuthorID(sqlite3*& DB, int author_id, std::vector<Genre>& genres) {
+    genres.clear();
+    std::vector<Book> authorBooks;
+    if (!getBooksByAuthorID(DB, author_id, authorBooks)) return false;
+
+    for (int i = 0; i < authorBooks.size(); i++) {
+        std::vector<Genre> searchVec;
+            if (!getGenresByBookID(DB, authorBooks[i].id, searchVec)) return false;
+        for (int j = 0; j < searchVec.size(); j++) {
+            if (std::find(genres.begin(), genres.end(), searchVec[j]) == genres.end())
+                genres.push_back(searchVec[j]);
         }
     }
-    return result;
+    return true;
 }
 
-std::vector<int> getBooksByUserID(sqlite3*& DB, int user_id) {
+bool getBooksByUserID(sqlite3*& DB, int user_id, std::vector<Book>& books) {
     sqlite3_stmt* stmt;
     const char* sql = R"(
         SELECT LOANS.BOOK_ID
