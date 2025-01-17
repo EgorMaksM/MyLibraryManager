@@ -76,3 +76,41 @@ BookViewWidget::~BookViewWidget()
 {
     delete ui;
 }
+
+void BookViewWidget::openBookByID(sqlite3*& DB, int book_id) {
+    Book book;
+    bool bCorrectID = getBookByID(DB, book_id, book);
+    if (bCorrectID) {
+        // Display title
+        titleValueLabel->setText(QString::fromStdString(book.title));
+
+        // Display author(s)
+        std::vector<int> vec = getAuthorsByBookID(DB, book_id);
+        std::vector<Author> resultAuthors;
+        for (unsigned long long i = 0; i < vec.size(); i++) {
+            Author author;
+            getAuthorByID(DB, vec[i], author);
+            resultAuthors.push_back(author);
+        }
+        if (resultAuthors.size() > 1) {
+            authorFieldLabel->setText("Authors:");
+            std::string newAuthorsList;
+            for (unsigned long long i = 0; i < resultAuthors.size() - 1; i++) {
+                newAuthorsList += resultAuthors[i].forename + " " + resultAuthors[i].surname = ", ";
+            }
+            newAuthorsList += resultAuthors.back().forename + " " + resultAuthors.back().surname;
+        }
+        else {
+            authorFieldLabel->setText("Author:");
+            authorValueLabel->setText(QString::fromStdString(resultAuthors[0].forename + " " + resultAuthors[0].surname));
+        }
+
+        // Display year
+        yearValueLabel->setText(QString::number(book.year));
+        // Display ID
+        IDValueLabel->setText(QString::number(book_id));
+    }
+    else {
+        qDebug() << "Error: Incorrect Book ID!";
+    }
+}

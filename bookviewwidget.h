@@ -6,6 +6,8 @@
 #include <QLabel>
 #include <QScrollArea>
 
+#include "libmgr.h"
+
 namespace Ui {
 class BookViewWidget;
 }
@@ -17,6 +19,8 @@ class BookViewWidget : public QWidget
 public:
     explicit BookViewWidget(QWidget *parent = nullptr);
     ~BookViewWidget();
+
+    bool openBookByID(sqlite3*& DB, int book_id);
 
 private:
     Ui::BookViewWidget *ui;
