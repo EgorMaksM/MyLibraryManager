@@ -24,6 +24,11 @@ int main(int argc, char *argv[])
         }
     }
     MainWindow w;
+
+    w.setWindowTitle("Full-Screen App");
+
+    w.showMaximized();
+
     w.show();
 
     return a.exec();
