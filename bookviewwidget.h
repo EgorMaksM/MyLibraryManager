@@ -20,7 +20,7 @@ public:
     explicit BookViewWidget(QWidget *parent = nullptr);
     ~BookViewWidget();
 
-    bool openBookByID(sqlite3*& DB, int book_id);
+    void openBookByID(sqlite3*& DB, int book_id);
 
 private:
     Ui::BookViewWidget *ui;

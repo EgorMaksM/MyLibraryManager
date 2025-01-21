@@ -85,13 +85,9 @@ void BookViewWidget::openBookByID(sqlite3*& DB, int book_id) {
         titleValueLabel->setText(QString::fromStdString(book.title));
 
         // Display author(s)
-        std::vector<int> vec = getAuthorsByBookID(DB, book_id);
         std::vector<Author> resultAuthors;
-        for (unsigned long long i = 0; i < vec.size(); i++) {
-            Author author;
-            getAuthorByID(DB, vec[i], author);
-            resultAuthors.push_back(author);
-        }
+        getAuthorsByBookID(DB, book_id, resultAuthors);
+
         if (resultAuthors.size() > 1) {
             authorFieldLabel->setText("Authors:");
             std::string newAuthorsList;
@@ -99,6 +95,7 @@ void BookViewWidget::openBookByID(sqlite3*& DB, int book_id) {
                 newAuthorsList += resultAuthors[i].forename + " " + resultAuthors[i].surname = ", ";
             }
             newAuthorsList += resultAuthors.back().forename + " " + resultAuthors.back().surname;
+            authorValueLabel->setText(QString::fromStdString(newAuthorsList));
         }
         else {
             authorFieldLabel->setText("Author:");

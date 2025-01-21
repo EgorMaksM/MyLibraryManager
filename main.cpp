@@ -13,7 +13,6 @@ int main(int argc, char *argv[])
     char* messageError;
     initDB(DB, messageError);
 
-
     QTranslator translator;
     const QStringList uiLanguages = QLocale::system().uiLanguages();
     for (const QString &locale : uiLanguages) {
@@ -23,7 +22,7 @@ int main(int argc, char *argv[])
             break;
         }
     }
-    MainWindow w;
+    MainWindow w(DB);
 
     w.setWindowTitle("Full-Screen App");
 

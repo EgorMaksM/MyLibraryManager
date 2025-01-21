@@ -9,20 +9,27 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    authorviewwidget.cpp \
     bookviewwidget.cpp \
+    libmgr.cpp \
     main.cpp \
     mainwindow.cpp \
-    sqlite3.c
+    sqlite3.c \
+    userviewwidget.cpp
 
 HEADERS += \
+    authorviewwidget.h \
     bookviewwidget.h \
     libmgr.h \
     mainwindow.h \
-    sqlite3.h
+    sqlite3.h \
+    userviewwidget.h
 
 FORMS += \
+    authorviewwidget.ui \
     bookviewwidget.ui \
-    mainwindow.ui
+    mainwindow.ui \
+    userviewwidget.ui
 
 TRANSLATIONS += \
     MyLibraryManagerQt_en_US.ts

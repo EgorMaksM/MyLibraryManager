@@ -6,8 +6,11 @@
 #include <QHBoxLayout>
 #include <QWidget>
 #include <QSplitter>
+#include <QStackedWidget>
 
 #include "bookviewwidget.h"
+#include "authorviewwidget.h"
+#include "userviewwidget.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -20,7 +23,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    MainWindow(sqlite3*& DB, QWidget *parent = nullptr);
     ~MainWindow();
 
     QSplitter* centralWidget;
@@ -28,8 +31,14 @@ public:
     QWidget* mainLayoutWidget;
 
     BookViewWidget* bookView;
+    AuthorViewWidget* authorView;
+    UserViewWidget* userView;
+
+    QStackedWidget* stackedWidget;
+    QLabel* noObjectChosen;
 
 private:
     Ui::MainWindow *ui;
+    sqlite3*& DB;
 };
 #endif // MAINWINDOW_H
