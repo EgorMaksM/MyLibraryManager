@@ -14,7 +14,9 @@ SOURCES += \
     libmgr.cpp \
     main.cpp \
     mainwindow.cpp \
+    smoothscrollarea.cpp \
     sqlite3.c \
+    tableviewwidget.cpp \
     userviewwidget.cpp
 
 HEADERS += \
@@ -22,13 +24,17 @@ HEADERS += \
     bookviewwidget.h \
     libmgr.h \
     mainwindow.h \
+    smoothscrollarea.h \
     sqlite3.h \
+    tableviewwidget.h \
     userviewwidget.h
 
 FORMS += \
     authorviewwidget.ui \
     bookviewwidget.ui \
     mainwindow.ui \
+    smoothscrollarea.ui \
+    tableviewwidget.ui \
     userviewwidget.ui
 
 TRANSLATIONS += \

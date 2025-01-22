@@ -11,6 +11,7 @@
 #include "bookviewwidget.h"
 #include "authorviewwidget.h"
 #include "userviewwidget.h"
+#include "tableviewwidget.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -30,12 +31,14 @@ public:
     QVBoxLayout* mainLayout;
     QWidget* mainLayoutWidget;
 
-    BookViewWidget* bookView;
-    AuthorViewWidget* authorView;
-    UserViewWidget* userView;
+    QSplitter* browsingWidget;
+    TableViewWidget* tableWidget;
 
     QStackedWidget* stackedWidget;
     QLabel* noObjectChosen;
+    BookViewWidget* bookView;
+    AuthorViewWidget* authorView;
+    UserViewWidget* userView;
 
 private:
     Ui::MainWindow *ui;

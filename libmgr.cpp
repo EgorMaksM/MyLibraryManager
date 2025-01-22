@@ -1169,7 +1169,7 @@ void sortBooks(std::vector<Book>& books, Value value, bool bLess) {
 std::vector<Author> sortAuthors(sqlite3*& DB, Value value, bool bLess) {
     std::vector<Author> authors;
     sqlite3_stmt* stmt;
-    const char* sql = "SELECT ID, FORENAME, SURNAME, BIO, BIRTH_DATE, DEATH_DATE FROM AUTHORS;";
+    const char* sql = "SELECT ID, FORENAME, SURNAME, BIO, BIRTH, DEATH FROM AUTHORS;";
 
     int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
 
@@ -1177,9 +1177,12 @@ std::vector<Author> sortAuthors(sqlite3*& DB, Value value, bool bLess) {
         int id = sqlite3_column_int(stmt, 0);
         const char* forename = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
         const char* surname = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
-        const char* bio = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+        const char* value = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+        std::string bio = (value == nullptr) ? "" : std::string(value);
         const char* b_date = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
-        const char* d_date = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+
+        value = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+        std::string d_date = (value == nullptr) ? "" : std::string(value);
 
         Author author(id, forename, surname, bio, stringToQDate(b_date), stringToQDate(d_date));
         authors.push_back(author);
@@ -1333,7 +1336,9 @@ std::vector<User> sortUsers(sqlite3*& DB, Value value, bool bLess) {
         const char* surname = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
         const char* birth = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
         const char* email = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
-        const char* phone = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+
+        const char* value = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+        std::string phone = (value == nullptr) ? "" : std::string(value);
 
         User user = User(id, forename, surname, stringToQDate(birth), email, phone);
         users.push_back(user);
