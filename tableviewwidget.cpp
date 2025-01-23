@@ -23,25 +23,29 @@ TableViewWidget::TableViewWidget(sqlite3*& DB, QWidget *parent)
     gridWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
     gridWidget->verticalHeader()->setVisible(false);
+    gridWidget->horizontalHeader()->setSortIndicatorShown(true);
+    gridWidget->setSortingEnabled(true);
 
     gridWidget->setStyleSheet(R"(
     QTableWidget {
-        border: 1px solid #DFDFDF; /* Set a border if needed */
-        border-radius: 0px;       /* Remove rounded corners */
+        border: 1px solid #DFDFDF;
+        border-radius: 0px;
     }
 
     QHeaderView::section {
         border: 1px solid #DFDFDF;
-        border-radius: 0px;       /* Remove rounded corners in header sections */
+        border-radius: 0px;
+        padding-right: 20px;
+    }
+    QHeaderView::section:first-child {
+        text-align: center; /* Align text to the center */
     }
 )");
 
     //std::vector<Book> books = sortBooks(DB, ID);
-    //std::vector<Author> authors = sortAuthors(DB, ID);
+    std::vector<Author> authors = getAuthors(DB);
     std::vector<User> users = getUsers(DB);
-    populateTable(users);
-
-    //mainLayout->addWidget(scrollArea);
+    populateTable(authors);
 }
 
 TableViewWidget::~TableViewWidget()
@@ -64,6 +68,7 @@ void TableViewWidget::populateTable(std::vector<Book> books) {
     for (int i = 0; i < rows; i++) {
         QTableWidgetItem* id = new QTableWidgetItem(QString::number(books[i].id));
         id->setData(Qt::UserRole, books[i].id);
+        id->setTextAlignment(Qt::AlignHCenter);
         gridWidget->setItem(i, 0, id);
         QTableWidgetItem* title = new QTableWidgetItem(books[i].title);
         gridWidget->setItem(i, 1, title);
@@ -111,17 +116,18 @@ void TableViewWidget::populateTable(std::vector<Author> authors) {
     for (int i = 0; i < rows; i++) {
         QTableWidgetItem* id = new QTableWidgetItem(QString::number(authors[i].id));
         id->setData(Qt::UserRole, authors[i].id);
+        id->setTextAlignment(Qt::AlignHCenter);
         gridWidget->setItem(i, 0, id);
         QTableWidgetItem* forename = new QTableWidgetItem(authors[i].forename);
         gridWidget->setItem(i, 1, forename);
         QTableWidgetItem* surname = new QTableWidgetItem(authors[i].surname);
         gridWidget->setItem(i, 2, surname);
-        QTableWidgetItem* birth = new QTableWidgetItem(QLocale().toString(authors[i].birth, "MMMM d, yyyy"));
+        QTableWidgetItem* birth = new QTableWidgetItem(QLocale().toString(authors[i].birth, "MMM d, yyyy"));
         birth->setData(Qt::UserRole, authors[i].birth);
         gridWidget->setItem(i, 3, birth);
         QTableWidgetItem* death;
         if (authors[i].death.isValid())
-            death = new QTableWidgetItem(QLocale().toString(authors[i].death, "MMMM d, yyyy"));
+            death = new QTableWidgetItem(QLocale().toString(authors[i].death, "MMM d, yyyy"));
         else
             death = new QTableWidgetItem("Living");
         birth->setData(Qt::UserRole, authors[i].death);
@@ -149,12 +155,13 @@ void TableViewWidget::populateTable(std::vector<User> users) {
     for (int i = 0; i < rows; i++) {
         QTableWidgetItem* id = new QTableWidgetItem(QString::number(users[i].id));
         id->setData(Qt::UserRole, users[i].id);
+        id->setTextAlignment(Qt::AlignHCenter);
         gridWidget->setItem(i, 0, id);
         QTableWidgetItem* forename = new QTableWidgetItem(users[i].forename);
         gridWidget->setItem(i, 1, forename);
         QTableWidgetItem* surname = new QTableWidgetItem(users[i].surname);
         gridWidget->setItem(i, 2, surname);
-        QTableWidgetItem* birth = new QTableWidgetItem(QLocale().toString(users[i].birth, "MMMM d, yyyy"));
+        QTableWidgetItem* birth = new QTableWidgetItem(QLocale().toString(users[i].birth, "MMM d, yyyy"));
         birth->setData(Qt::UserRole, users[i].birth);
         gridWidget->setItem(i, 3, birth);
         QTableWidgetItem* email = new QTableWidgetItem(users[i].email);
