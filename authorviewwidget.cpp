@@ -10,7 +10,7 @@ AuthorViewWidget::AuthorViewWidget(QWidget *parent)
 
     mainLayout = new QVBoxLayout(this);
 
-    scrollArea = new QScrollArea(this);
+    scrollArea = new SmoothScrollArea(this);
     scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     scrollArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);

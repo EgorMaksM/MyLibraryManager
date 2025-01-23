@@ -4,10 +4,9 @@
 #include <QWidget>
 #include <QVBoxLayout>
 #include <QLabel>
-#include <QScrollArea>
-#include <QDate>
 
-#include "libmgr.h"
+#include "smoothscrollarea.h"
+#include "user.h"
 
 namespace Ui {
 class UserViewWidget;
@@ -27,7 +26,7 @@ private:
     Ui::UserViewWidget *ui;
 
     QVBoxLayout* mainLayout;
-    QScrollArea* scrollArea;
+    SmoothScrollArea* scrollArea;
     QWidget* scrollContent;
     QVBoxLayout* scrollContentLayout;
 

@@ -61,27 +61,14 @@ SmoothScrollArea::SmoothScrollArea(QWidget* parent) : QScrollArea(parent) {
         background: none;
     }
 )");*/
-    setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 }
 
 void SmoothScrollArea::wheelEvent(QWheelEvent *event) {
-    if (event->modifiers() & Qt::ControlModifier) {
-        int deltaX = event->angleDelta().y();
-        QPropertyAnimation *hAnimation = new QPropertyAnimation(horizontalScrollBar(), "value", this);
-        hAnimation->setDuration(qMin(400, 100 + abs(deltaX)));
-        hAnimation->setStartValue(horizontalScrollBar()->value());
-        hAnimation->setEndValue(horizontalScrollBar()->value() - deltaX);
-        hAnimation->setEasingCurve(QEasingCurve::OutCubic);
-        hAnimation->start(QAbstractAnimation::DeleteWhenStopped);
-    }
-    else {
-        int delta = event->angleDelta().y();
-        QPropertyAnimation *animation = new QPropertyAnimation(verticalScrollBar(), "value", this);
-        animation->setDuration(qMin(400, 100 + abs(delta)));
-        animation->setStartValue(verticalScrollBar()->value());
-        animation->setEndValue(verticalScrollBar()->value() - delta);
-        animation->setEasingCurve(QEasingCurve::OutCubic);
-        animation->start(QAbstractAnimation::DeleteWhenStopped);
-    }
+    int delta = event->angleDelta().y();
+    QPropertyAnimation *animation = new QPropertyAnimation(verticalScrollBar(), "value", this);
+    animation->setDuration(qMin(400, 100 + abs(delta)));
+    animation->setStartValue(verticalScrollBar()->value());
+    animation->setEndValue(verticalScrollBar()->value() - delta);
+    animation->setEasingCurve(QEasingCurve::OutCubic);
+    animation->start(QAbstractAnimation::DeleteWhenStopped);
 }

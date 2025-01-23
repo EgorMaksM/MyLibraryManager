@@ -9,7 +9,6 @@
 #include <QStringList>
 
 #include "libmgr.h"
-#include "smoothscrollarea.h"
 
 namespace Ui {
 class TableViewWidget;
@@ -30,7 +29,6 @@ public:
 private:
     Ui::TableViewWidget *ui;
 
-    SmoothScrollArea* scrollArea;
     QTableWidget* gridWidget;
 
     sqlite3*& DB;

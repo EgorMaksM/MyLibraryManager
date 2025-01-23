@@ -9,24 +9,35 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    author.cpp \
     authorviewwidget.cpp \
+    book.cpp \
     bookviewwidget.cpp \
+    genre.cpp \
     libmgr.cpp \
+    loan.cpp \
     main.cpp \
     mainwindow.cpp \
     smoothscrollarea.cpp \
     sqlite3.c \
     tableviewwidget.cpp \
+    user.cpp \
     userviewwidget.cpp
 
 HEADERS += \
+    CommonUtil.h \
+    author.h \
     authorviewwidget.h \
+    book.h \
     bookviewwidget.h \
+    genre.h \
     libmgr.h \
+    loan.h \
     mainwindow.h \
     smoothscrollarea.h \
     sqlite3.h \
     tableviewwidget.h \
+    user.h \
     userviewwidget.h
 
 FORMS += \

@@ -4,8 +4,8 @@
 #include <QWidget>
 #include <QVBoxLayout>
 #include <QLabel>
-#include <QScrollArea>
 
+#include "smoothscrollarea.h"
 #include "libmgr.h"
 
 namespace Ui {
@@ -26,7 +26,7 @@ private:
     Ui::BookViewWidget *ui;
 
     QVBoxLayout* mainLayout;
-    QScrollArea* scrollArea;
+    SmoothScrollArea* scrollArea;
     QWidget* scrollContent;
     QVBoxLayout* scrollContentLayout;
 

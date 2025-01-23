@@ -10,15 +10,10 @@ TableViewWidget::TableViewWidget(sqlite3*& DB, QWidget *parent)
 
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
 
-    scrollArea = new SmoothScrollArea(this);
-    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    scrollArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    gridWidget = new QTableWidget(scrollArea);
+    gridWidget = new QTableWidget(this);
     gridWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    scrollArea->setWidget(gridWidget);
-    scrollArea->setWidgetResizable(true);
+    mainLayout->addWidget(gridWidget);
 
     // Table style setup
     gridWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
@@ -46,7 +41,7 @@ TableViewWidget::TableViewWidget(sqlite3*& DB, QWidget *parent)
     std::vector<User> users = getUsers(DB);
     populateTable(users);
 
-    mainLayout->addWidget(scrollArea);
+    //mainLayout->addWidget(scrollArea);
 }
 
 TableViewWidget::~TableViewWidget()
