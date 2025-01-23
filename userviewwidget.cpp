@@ -97,7 +97,7 @@ void UserViewWidget::openUserByID(sqlite3*& DB, int user_id) {
     bool bCorrectID = getUserByID(DB, user_id, user);
     if (bCorrectID) {
         // Display Name
-        nameValueLabel->setText(QString::fromStdString(user.forename + " " + user.surname));
+        nameValueLabel->setText(user.forename + " " + user.surname);
 
         // Display Birthdate
         QDate today = QDate::currentDate();
@@ -106,13 +106,13 @@ void UserViewWidget::openUserByID(sqlite3*& DB, int user_id) {
         birthValueLabel->setText(QLocale().toString(user.birth, "MMMM d, yyyy") + " (" + QString::number(years) + " years)");
 
         // Display Email
-        emailValueLabel->setText(QString::fromStdString(user.email));
+        emailValueLabel->setText(user.email);
 
         // Display Phone
-        if (user.phone.empty())
+        if (user.phone.isEmpty())
             phoneValueLabel->setText(QString::fromStdString("No phone number"));
         else
-            phoneValueLabel->setText(QString::fromStdString(user.phone));
+            phoneValueLabel->setText(user.phone);
 
         // Display ID
         IDValueLabel->setText(QString::number(user.id));

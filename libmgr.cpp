@@ -1,13 +1,13 @@
 #include "libmgr.h"
 
-QDate stringToQDate(const std::string& dateStr) {
-    if (dateStr.empty()) return QDate();
-    return QDate::fromString(QString::fromStdString(dateStr), "yyyy-MM-dd");
+QDate stringToQDate(const QString& dateStr) {
+    if (dateStr.isEmpty()) return QDate();
+    return QDate::fromString(dateStr, "yyyy-MM-dd");
 }
 
-std::string QDateToString(const QDate& date) {
+QString QDateToString(const QDate& date) {
     if (date.isNull()) return "";
-    return date.toString("yyyy-MM-dd").toStdString();
+    return date.toString("yyyy-MM-dd");
 }
 
 
@@ -49,41 +49,19 @@ bool operator==(const Loan& loan, const Loan& other) {
 }
 
 
-int callback(void* data, int argc, char** argv, char** azColName) {
-    for (int i = 0; i < argc; i++) {
-        std::cout << azColName[i] << ": " << (argv[i] ? argv[i] : "NULL") << " | ";
-    }
-    std::cout << "\n";
-    return 0;
-}
-
-void printTable(sqlite3*& DB, std::string name) {
-    char* messageError;
-    std::string sql1 = "SELECT * FROM " + name + ";";
-    int exit = sqlite3_exec(DB, sql1.c_str(), callback, 0, &messageError);
-}
-
-void say(std::string x) {
-    for (int i = 0; i < x.length() + 4; i++) std::cout << "-";
-    std::cout << "\n| " << x << " |\n";
-    for (int i = 0; i < x.length() + 4; i++) std::cout << "-";
-    std::cout << "\n";
-}
-
-// Main part of code
 void initDB(sqlite3*& DB, char*& messageError) {
 
     int exit = 0;
     exit = sqlite3_open("library.db", &DB);
 
-    std::string sql_books = R"(
+    QString sql_books = R"(
         CREATE TABLE IF NOT EXISTS BOOKS(
         ID INTEGER PRIMARY KEY AUTOINCREMENT,
         TITLE      TINYTEXT NOT NULL,
         YEAR       INT UNSIGNED NOT NULL);
     )";
 
-    std::string sql_authors = R"(
+    QString sql_authors = R"(
         CREATE TABLE IF NOT EXISTS AUTHORS(
         ID INTEGER PRIMARY KEY AUTOINCREMENT,
         FORENAME   TINYTEXT NOT NULL,
@@ -93,7 +71,7 @@ void initDB(sqlite3*& DB, char*& messageError) {
         DEATH      DATE);
     )";
 
-    std::string sql_book_authors = R"(
+    QString sql_book_authors = R"(
         CREATE TABLE IF NOT EXISTS BOOK_AUTHORS(
         ID INTEGER PRIMARY KEY AUTOINCREMENT,
         BOOK_ID    INTEGER NOT NULL,
@@ -102,13 +80,13 @@ void initDB(sqlite3*& DB, char*& messageError) {
         FOREIGN KEY (AUTHOR_ID) REFERENCES AUTHORS(ID) ON DELETE CASCADE);
     )";
 
-    std::string sql_genres = R"(
+    QString sql_genres = R"(
         CREATE TABLE IF NOT EXISTS GENRES(
         ID INTEGER PRIMARY KEY AUTOINCREMENT,
         NAME       TINYTEXT NOT NULL);
     )";
 
-    std::string sql_book_genres = R"(
+    QString sql_book_genres = R"(
         CREATE TABLE IF NOT EXISTS BOOK_GENRES(
         ID INTEGER PRIMARY KEY AUTOINCREMENT,
         BOOK_ID    INTEGER NOT NULL,
@@ -117,7 +95,7 @@ void initDB(sqlite3*& DB, char*& messageError) {
         FOREIGN KEY (GENRE_ID) REFERENCES GENRES(ID) ON DELETE CASCADE);
     )";
 
-    std::string sql_users = R"(
+    QString sql_users = R"(
         CREATE TABLE IF NOT EXISTS USERS(
         ID INTEGER PRIMARY KEY AUTOINCREMENT,
         FORENAME       TINYTEXT NOT NULL,
@@ -127,7 +105,7 @@ void initDB(sqlite3*& DB, char*& messageError) {
         PHONE          TINYTEXT);
     )";
 
-    std::string sql_loans = R"(
+    QString sql_loans = R"(
         CREATE TABLE IF NOT EXISTS LOANS(
         ID INTEGER PRIMARY KEY AUTOINCREMENT,
         USER_ID       INTEGER NOT NULL,
@@ -139,249 +117,162 @@ void initDB(sqlite3*& DB, char*& messageError) {
     )";
 
 
-    exit = sqlite3_exec(DB, sql_books.c_str(), NULL, 0, &messageError);
+    exit = sqlite3_exec(DB, sql_books.toUtf8().constData(), NULL, 0, &messageError);
     if (exit != SQLITE_OK) {
-        std::cerr << "Error in create BOOKS." << "\n";
+        qCritical() << "Error in create BOOKS." << "\n";
         sqlite3_free(messageError);
     }
 
-    exit = sqlite3_exec(DB, sql_authors.c_str(), NULL, 0, &messageError);
+    exit = sqlite3_exec(DB, sql_authors.toUtf8().constData(), NULL, 0, &messageError);
     if (exit != SQLITE_OK) {
-        std::cerr << "Error in create AUTHORS." << "\n";
+        qCritical() << "Error in create AUTHORS." << "\n";
         sqlite3_free(messageError);
     }
 
-    exit = sqlite3_exec(DB, sql_book_authors.c_str(), NULL, 0, &messageError);
+    exit = sqlite3_exec(DB, sql_book_authors.toUtf8().constData(), NULL, 0, &messageError);
     if (exit != SQLITE_OK) {
-        std::cerr << "Error in create BOOK_AUTHORS." << "\n";
+        qCritical() << "Error in create BOOK_AUTHORS." << "\n";
         sqlite3_free(messageError);
     }
 
-    exit = sqlite3_exec(DB, sql_genres.c_str(), NULL, 0, &messageError);
+    exit = sqlite3_exec(DB, sql_genres.toUtf8().constData(), NULL, 0, &messageError);
     if (exit != SQLITE_OK) {
-        std::cerr << "Error in create GENRES." << "\n";
+        qCritical() << "Error in create GENRES." << "\n";
         sqlite3_free(messageError);
     }
 
-    exit = sqlite3_exec(DB, sql_book_genres.c_str(), NULL, 0, &messageError);
+    exit = sqlite3_exec(DB, sql_book_genres.toUtf8().constData(), NULL, 0, &messageError);
     if (exit != SQLITE_OK) {
-        std::cerr << "Error in create BOOK_GENRES" << "\n";
+        qCritical() << "Error in create BOOK_GENRES" << "\n";
         sqlite3_free(messageError);
     }
 
-    exit = sqlite3_exec(DB, sql_users.c_str(), NULL, 0, &messageError);
+    exit = sqlite3_exec(DB, sql_users.toUtf8().constData(), NULL, 0, &messageError);
     if (exit != SQLITE_OK) {
-        std::cerr << "Error in create USERS" << "\n";
+        qCritical() << "Error in create USERS" << "\n";
         sqlite3_free(messageError);
     }
 
-    exit = sqlite3_exec(DB, sql_loans.c_str(), NULL, 0, &messageError);
+    exit = sqlite3_exec(DB, sql_loans.toUtf8().constData(), NULL, 0, &messageError);
     if (exit != SQLITE_OK) {
-        std::cerr << "Error in create LOANS" << "\n";
+        qCritical() << "Error in create LOANS" << "\n";
         sqlite3_free(messageError);
     }
 }
 
-/*
-// n_b - Add new book
-// n_a - Add new author
-// n_g - Add new genre
-// link_b_a - Link an author and a book
-// link_b_g - Link a genre and a book
-// end - Close program
-*/
-/*void IOHandle(sqlite3*& DB) {
-    while (true) {
-        std::string input;
-        std::cin >> input;
-        switch (hash(input)) {
-        case "n_b"_hash: {
-            std::string title;
-            int year;
-            say("Input book's title:");
-            std::cin.ignore();
-            std::getline(std::cin, title);
-            say("Input book's year of publication:");
-            std::cin >> year;
-            addBook(DB, title, year);
-            break;
-        }
-        case "n_a"_hash: {
-            std::string forename, surname, bio;
-            unsigned short int b_dd, b_mm, b_yyyy, d_dd, d_mm, d_yyyy;
-            say("Input author's forename:");
-            std::cin.ignore();
-            std::getline(std::cin, forename);
-            say("Input author's surname:");
-            std::getline(std::cin, surname);
-            say("Input author's bio:");
-            std::getline(std::cin, bio);
-            say("Input author's date of birth (dd-mm-yyyy):");
-            std::cin >> b_dd >> b_mm >> b_yyyy;
-            say("Input author's date of death (0 0 0 if not dead yet):");
-            std::cin >> d_dd >> d_mm >> d_yyyy;
-            //addAuthor(DB, forename, surname, bio, b_year, d_year);
-            break;
-        }
-        case "n_g"_hash: {
-            std::string name;
-            say("Input genre's name:");
-            std::cin.ignore();
-            std::getline(std::cin, name);
-            addGenre(DB, name);
-            break;
-        }
-        case "link_b_a"_hash: {
-            int book_id, author_id;
-            say("Input book's ID:");
-            std::cin >> book_id;
-            say("Input author's ID:");
-            std::cin >> author_id;
-            linkAuthorToBook(DB, author_id, book_id);
-            break;
-        }
-        case "link_b_g"_hash: {
-            int book_id, genre_id;
-            say("Input book's ID:");
-            std::cin >> book_id;
-            say("Input author's ID:");
-            std::cin >> genre_id;
-            linkGenreToBook(DB, genre_id, book_id);
-            break;
-        }
-        case "a"_hash: {
-            std::vector<int> x = getGenresByBookID(DB, 1);
-            for (int i = 0; i < x.size(); i++) std::cout << x[i] + 1 << "\n";
-            break;
-        }
-        case "end"_hash: {
-            sqlite3_close(DB);
-            exit(0);
-            break;
-        }
-        }
-    }
-}
-*/
-
-void addBook(sqlite3*& DB, std::string title, unsigned short int year) {
+void addBook(sqlite3*& DB, QString title, unsigned short int year) {
     sqlite3_stmt* stmt;
     const char* sql = "INSERT INTO BOOKS (TITLE, YEAR) VALUES (?, ?);";
     int exit = 0;
 
     exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
     if (exit != SQLITE_OK) {
-        std::cerr << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+        qCritical() << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
         return;
     }
 
-    sqlite3_bind_text(stmt, 1, title.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 1, title.toUtf8().constData(), -1, SQLITE_STATIC);
     sqlite3_bind_int(stmt, 2, year);
 
     exit = sqlite3_step(stmt);
     if (exit != SQLITE_DONE) {
-        std::cerr << "Error executing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+        qCritical() << "Error executing SQL statement: " << sqlite3_errmsg(DB) << "\n";
     }
     else {
-        say("Book inserted successfully!");
+        qDebug() << "Book inserted successfully!";
     }
-
     sqlite3_finalize(stmt);
-    printTable(DB, "BOOKS");
 }
 
-void addAuthor(sqlite3*& DB, std::string forename, std::string surname, std::string bio, QDate q_birth, QDate q_death) {
+void addAuthor(sqlite3*& DB, QString forename, QString surname, QString bio, QDate q_birth, QDate q_death) {
     sqlite3_stmt* stmt;
     const char* sql = "INSERT INTO AUTHORS (FORENAME, SURNAME, BIO, BIRTH, DEATH) VALUES (?, ?, ?, ?, ?);";
     int exit = 0;
 
-    std::string birth = QDateToString(q_birth);
-    std::string death = QDateToString(q_death);
+    QString birth = QDateToString(q_birth);
+    QString death = QDateToString(q_death);
 
     exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
     if (exit != SQLITE_OK) {
-        std::cerr << "Error preparing SQL statement1: " << sqlite3_errmsg(DB) << "\n";
+        qCritical() << "Error preparing SQL statement1: " << sqlite3_errmsg(DB) << "\n";
         return;
     }
 
-    sqlite3_bind_text(stmt, 1, forename.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 2, surname.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 1, forename.toUtf8().constData(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, surname.toUtf8().constData(), -1, SQLITE_STATIC);
 
-    if (bio.empty()) sqlite3_bind_null(stmt, 3);
-    else sqlite3_bind_text(stmt, 3, bio.c_str(), -1, SQLITE_STATIC);
+    if (bio.isEmpty()) sqlite3_bind_null(stmt, 3);
+    else sqlite3_bind_text(stmt, 3, bio.toUtf8().constData(), -1, SQLITE_STATIC);
 
-    sqlite3_bind_text(stmt, 4, birth.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 4, birth.toUtf8().constData(), -1, SQLITE_STATIC);
 
-    if (death.empty()) sqlite3_bind_null(stmt, 5);
-    else sqlite3_bind_text(stmt, 5, death.c_str(), -1, SQLITE_STATIC);
+    if (death.isEmpty()) sqlite3_bind_null(stmt, 5);
+    else sqlite3_bind_text(stmt, 5, death.toUtf8().constData(), -1, SQLITE_STATIC);
 
     exit = sqlite3_step(stmt);
     if (exit != SQLITE_DONE) {
-        std::cerr << "Error executing SQL statement2: " << sqlite3_errmsg(DB) << "\n";
+        qCritical() << "Error executing SQL statement2: " << sqlite3_errmsg(DB) << "\n";
     }
     else {
-        say("Author inserted successfully!");
+        qDebug() << "Author inserted successfully!";
     }
 
     sqlite3_finalize(stmt);
-    printTable(DB, "AUTHORS");
 }
 
-void addGenre(sqlite3*& DB, std::string name) {
+void addGenre(sqlite3*& DB, QString name) {
     sqlite3_stmt* stmt;
     const char* sql = "INSERT INTO GENRES (NAME) VALUES (?);";
     int exit = 0;
 
     exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
     if (exit != SQLITE_OK) {
-        std::cerr << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+        qCritical() << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
         return;
     }
 
-    sqlite3_bind_text(stmt, 1, name.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 1, name.toUtf8().constData(), -1, SQLITE_STATIC);
 
     exit = sqlite3_step(stmt);
     if (exit != SQLITE_DONE) {
-        std::cerr << "Error executing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+        qCritical() << "Error executing SQL statement: " << sqlite3_errmsg(DB) << "\n";
     }
     else {
-        say("Genre inserted successfully!");
+        qDebug() << "Genre inserted successfully!";
     }
 
     sqlite3_finalize(stmt);
-    printTable(DB, "GENRES");
 }
 
-void addUser(sqlite3*& DB, std::string forename, std::string surname, QDate q_birth, std::string email, std::string phone) {
+void addUser(sqlite3*& DB, QString forename, QString surname, QDate q_birth, QString email, QString phone) {
     sqlite3_stmt* stmt;
     const char* sql = "INSERT INTO USERS (FORENAME, SURNAME, BIRTH, EMAIL, PHONE) VALUES (?, ?, ?, ?, ?);";
     int exit = 0;
 
-    std::string birth = QDateToString(q_birth);
+    QString birth = QDateToString(q_birth);
     exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
     if (exit != SQLITE_OK) {
-        std::cerr << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+        qCritical() << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
         return;
     }
 
-    sqlite3_bind_text(stmt, 1, forename.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 2, surname.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 3, birth.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 4, email.c_str(), -1, SQLITE_STATIC);
-    if (phone.empty()) sqlite3_bind_null(stmt, 5);
-    else sqlite3_bind_text(stmt, 5, phone.c_str(), -1, SQLITE_STATIC);
-    //sqlite3_bind_text(stmt, 5, phone.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 1, forename.toUtf8().constData(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, surname.toUtf8().constData(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 3, birth.toUtf8().constData(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 4, email.toUtf8().constData(), -1, SQLITE_STATIC);
+    if (phone.isEmpty()) sqlite3_bind_null(stmt, 5);
+    else sqlite3_bind_text(stmt, 5, phone.toUtf8().constData(), -1, SQLITE_STATIC);
+    //sqlite3_bind_text(stmt, 5, phone.toUtf8().constData(), -1, SQLITE_STATIC);
 
     exit = sqlite3_step(stmt);
     if (exit != SQLITE_DONE) {
-        std::cerr << "Error executing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+        qCritical() << "Error executing SQL statement: " << sqlite3_errmsg(DB) << "\n";
     }
     else {
-        say("User inserted successfully!");
+        qDebug("User inserted successfully!");
     }
 
     sqlite3_finalize(stmt);
-    printTable(DB, "USERS");
 }
 
 void addLoan(sqlite3*& DB, int user_id, int book_id, QDate q_start, QDate q_end) {
@@ -389,30 +280,29 @@ void addLoan(sqlite3*& DB, int user_id, int book_id, QDate q_start, QDate q_end)
     const char* sql = "INSERT INTO LOANS (USER_ID, BOOK_ID, START, END) VALUES (?, ?, ?, ?);";
     int exit = 0;
 
-    std::string start = QDateToString(q_start);
-    std::string end = QDateToString(q_end);
+    QString start = QDateToString(q_start);
+    QString end = QDateToString(q_end);
 
     exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
     if (exit != SQLITE_OK) {
-        std::cerr << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+        qCritical() << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
         return;
     }
 
     sqlite3_bind_int(stmt, 1, user_id);
     sqlite3_bind_int(stmt, 2, book_id);
-    sqlite3_bind_text(stmt, 3, start.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 4, end.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 3, start.toUtf8().constData(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 4, end.toUtf8().constData(), -1, SQLITE_STATIC);
 
     exit = sqlite3_step(stmt);
     if (exit != SQLITE_DONE) {
-        std::cerr << "Error executing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+        qCritical() << "Error executing SQL statement: " << sqlite3_errmsg(DB) << "\n";
     }
     else {
-        say("Loan inserted successfully!");
+        qDebug("Loan inserted successfully!");
     }
 
     sqlite3_finalize(stmt);
-    printTable(DB, "LOANS");
 }
 
 void linkAuthorToBook(sqlite3*& DB, int author_id, int book_id) {
@@ -422,7 +312,7 @@ void linkAuthorToBook(sqlite3*& DB, int author_id, int book_id) {
 
     exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
     if (exit != SQLITE_OK) {
-        std::cerr << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+        qCritical() << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
         return;
     }
 
@@ -431,14 +321,13 @@ void linkAuthorToBook(sqlite3*& DB, int author_id, int book_id) {
 
     exit = sqlite3_step(stmt);
     if (exit != SQLITE_DONE) {
-        std::cerr << "Error executing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+        qCritical() << "Error executing SQL statement: " << sqlite3_errmsg(DB) << "\n";
     }
     else {
-        say("Book<->Author relationship inserted successfully!");
+        qDebug("Book<->Author relationship inserted successfully!");
     }
 
     sqlite3_finalize(stmt);
-    printTable(DB, "BOOK_AUTHORS");
 }
 
 void linkGenreToBook(sqlite3*& DB, int genre_id, int book_id) {
@@ -448,7 +337,7 @@ void linkGenreToBook(sqlite3*& DB, int genre_id, int book_id) {
 
     exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
     if (exit != SQLITE_OK) {
-        std::cerr << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+        qCritical() << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
         return;
     }
 
@@ -457,14 +346,13 @@ void linkGenreToBook(sqlite3*& DB, int genre_id, int book_id) {
 
     exit = sqlite3_step(stmt);
     if (exit != SQLITE_DONE) {
-        std::cerr << "Error executing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+        qCritical() << "Error executing SQL statement: " << sqlite3_errmsg(DB) << "\n";
     }
     else {
-        say("Book<->Genre relationship inserted successfully!");
+        qDebug("Book<->Genre relationship inserted successfully!");
     }
 
     sqlite3_finalize(stmt);
-    printTable(DB, "BOOK_GENRES");
 }
 
 bool unlinkAuthorFromBook(sqlite3*& DB, int author_id, int book_id) {
@@ -476,7 +364,7 @@ bool unlinkAuthorFromBook(sqlite3*& DB, int author_id, int book_id) {
 
     int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, nullptr);
     if (exit != SQLITE_OK) {
-        std::cerr << "Error preparing statement: " << sqlite3_errmsg(DB) << std::endl;
+        qCritical() << "Error preparing statement: " << sqlite3_errmsg(DB) << "\n";
         return false;
     }
 
@@ -485,7 +373,7 @@ bool unlinkAuthorFromBook(sqlite3*& DB, int author_id, int book_id) {
 
     exit = sqlite3_step(stmt);
     if (exit != SQLITE_DONE) {
-        std::cerr << "Error executing statement: " << sqlite3_errmsg(DB) << std::endl;
+        qCritical() << "Error executing statement: " << sqlite3_errmsg(DB) << "\n";
         sqlite3_finalize(stmt);
         return false;
     }
@@ -503,7 +391,7 @@ bool unlinkGenreFromBook(sqlite3*& DB, int genre_id, int book_id) {
 
     int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, nullptr);
     if (exit != SQLITE_OK) {
-        std::cerr << "Error preparing statement: " << sqlite3_errmsg(DB) << std::endl;
+        qCritical() << "Error preparing statement: " << sqlite3_errmsg(DB) << "\n";
         return false;
     }
 
@@ -512,13 +400,211 @@ bool unlinkGenreFromBook(sqlite3*& DB, int genre_id, int book_id) {
 
     exit = sqlite3_step(stmt);
     if (exit != SQLITE_DONE) {
-        std::cerr << "Error executing statement: " << sqlite3_errmsg(DB) << std::endl;
+        qCritical() << "Error executing statement: " << sqlite3_errmsg(DB) << "\n";
         sqlite3_finalize(stmt);
         return false;
     }
 
     sqlite3_finalize(stmt);
     return true;
+}
+
+
+bool getBookByID(sqlite3*& DB, int book_id, Book& book) {
+    sqlite3_stmt* stmt;
+    const char* sql = "SELECT TITLE, YEAR FROM BOOKS WHERE ID = ?;";
+
+    int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+    sqlite3_bind_int(stmt, 1, book_id);
+
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        const char* title = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        int year = sqlite3_column_int(stmt, 1);
+        book = Book(book_id, title, year);
+        sqlite3_finalize(stmt);
+        return true;
+    }
+    sqlite3_finalize(stmt);
+    return false;
+}
+
+bool getAuthorByID(sqlite3*& DB, int author_id, Author& author) {
+    sqlite3_stmt* stmt;
+    const char* sql = "SELECT FORENAME, SURNAME, BIO, BIRTH, DEATH FROM AUTHORS WHERE ID = ?;";
+
+    int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+    sqlite3_bind_int(stmt, 1, author_id);
+
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        const char* forename = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        const char* surname = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+
+        const char* value = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        QString bio = (value == nullptr) ? "" : QString(value);
+
+        const char* birth = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+
+        value = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+        QString death = (value == nullptr) ? "" : QString(value);
+
+        author = Author(author_id, forename, surname, bio, stringToQDate(birth), stringToQDate(death));
+        sqlite3_finalize(stmt);
+        return true;
+    }
+    sqlite3_finalize(stmt);
+    return false;
+}
+
+bool getGenreByID(sqlite3*& DB, int genre_id, Genre& genre) {
+    sqlite3_stmt* stmt;
+    const char* sql = "SELECT NAME FROM GENRES WHERE ID = ?;";
+
+    int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+    sqlite3_bind_int(stmt, 1, genre_id);
+
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        const char* name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        genre = Genre(genre_id, name);
+        sqlite3_finalize(stmt);
+        return true;
+    }
+    sqlite3_finalize(stmt);
+    return false;
+}
+
+bool getUserByID(sqlite3*& DB, int user_id, User& user) {
+    sqlite3_stmt* stmt;
+    const char* sql = "SELECT FORENAME, SURNAME, BIRTH, EMAIL, PHONE FROM USERS WHERE ID = ?;";
+
+    int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+    sqlite3_bind_int(stmt, 1, user_id);
+
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        const char* forename = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        const char* surname = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        const char* birth = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        const char* email = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+
+        const char* value = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+        QString phone = (value == nullptr) ? "" : QString(value);
+        user = User(user_id, forename, surname, stringToQDate(birth), email, phone);
+        sqlite3_finalize(stmt);
+        return true;
+    }
+    sqlite3_finalize(stmt);
+    return false;
+}
+
+
+std::vector<Book> getBooks(sqlite3*& DB) {
+    std::vector<Book> books;
+    sqlite3_stmt* stmt;
+    const char* sql = "SELECT ID, TITLE, YEAR FROM BOOKS;";
+
+    int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int id = sqlite3_column_int(stmt, 0);
+        const char* title = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        int year = sqlite3_column_int(stmt, 2);
+
+        Book book(id, title, year);
+        books.push_back(book);
+    }
+    sqlite3_finalize(stmt);
+    return books;
+}
+
+std::vector<Author> getAuthors(sqlite3*& DB) {
+    std::vector<Author> authors;
+    sqlite3_stmt* stmt;
+    const char* sql = "SELECT ID, FORENAME, SURNAME, BIO, BIRTH, DEATH FROM AUTHORS;";
+
+    int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int id = sqlite3_column_int(stmt, 0);
+        const char* forename = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        const char* surname = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        const char* value = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+        QString bio = (value == nullptr) ? "" : QString(value);
+        const char* b_date = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+
+        value = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+        QString d_date = (value == nullptr) ? "" : QString(value);
+
+        Author author(id, forename, surname, bio, stringToQDate(b_date), stringToQDate(d_date));
+        authors.push_back(author);
+    }
+    sqlite3_finalize(stmt);
+    return authors;
+}
+
+std::vector<Genre> getGenres(sqlite3*& DB) {
+    std::vector<Genre> genres;
+    sqlite3_stmt* stmt;
+    const char* sql = "SELECT ID, NAME FROM GENRES;";
+
+    int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int id = sqlite3_column_int(stmt, 0);
+        const char* name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+
+        Genre genre(id, name);
+        genres.push_back(genre);
+    }
+    sqlite3_finalize(stmt);
+    return genres;
+}
+
+std::vector<User> getUsers(sqlite3*& DB) {
+    std::vector<User> users;
+    sqlite3_stmt* stmt;
+    const char* sql = "SELECT ID, FORENAME, SURNAME, BIRTH, EMAIL, PHONE FROM USERS;";
+
+    int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int id = sqlite3_column_int(stmt, 0);
+        const char* forename = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        const char* surname = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        const char* birth = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+        const char* email = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+
+        const char* value = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+        QString phone = (value == nullptr) ? "" : QString(value);
+
+        User user = User(id, forename, surname, stringToQDate(birth), email, phone);
+        users.push_back(user);
+    }
+    sqlite3_finalize(stmt);
+    return users;
+}
+
+std::vector<Loan> getLoans(sqlite3*& DB) {
+    std::vector<Loan> loans;
+    sqlite3_stmt* stmt;
+    const char* sql = "SELECT ID, USER_ID, BOOK_ID, START, END FROM LOANS;";
+
+    int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int id = sqlite3_column_int(stmt, 0);
+        int user_id = sqlite3_column_int(stmt, 1);
+        int book_id = sqlite3_column_int(stmt, 2);
+        const char* start = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+        const char* end = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+
+        Loan loan = Loan(id, user_id, book_id, stringToQDate(start), stringToQDate(end));
+        loans.push_back(loan);
+    }
+    sqlite3_finalize(stmt);
+    return loans;
 }
 
 
@@ -670,97 +756,7 @@ bool getBooksByUserID(sqlite3*& DB, int user_id, std::vector<Book>& books) {
 }
 
 
-bool getBookByID(sqlite3*& DB, int book_id, Book& book) {
-    sqlite3_stmt* stmt;
-    const char* sql = "SELECT TITLE, YEAR FROM BOOKS WHERE ID = ?;";
-
-    int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
-
-    sqlite3_bind_int(stmt, 1, book_id);
-
-    if (sqlite3_step(stmt) == SQLITE_ROW) {
-        const char* title = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-        int year = sqlite3_column_int(stmt, 1);
-        book = Book(book_id, title, year);
-        sqlite3_finalize(stmt);
-        return true;
-    }
-    sqlite3_finalize(stmt);
-    return false;
-}
-
-bool getAuthorByID(sqlite3*& DB, int author_id, Author& author) {
-    sqlite3_stmt* stmt;
-    const char* sql = "SELECT FORENAME, SURNAME, BIO, BIRTH, DEATH FROM AUTHORS WHERE ID = ?;";
-
-    int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
-
-    sqlite3_bind_int(stmt, 1, author_id);
-
-    if (sqlite3_step(stmt) == SQLITE_ROW) {
-        const char* forename = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-        const char* surname = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-
-        const char* value = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
-        std::string bio = (value == nullptr) ? "" : std::string(value);
-
-        const char* birth = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
-
-        value = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
-        std::string death = (value == nullptr) ? "" : std::string(value);
-
-        author = Author(author_id, forename, surname, bio, stringToQDate(birth), stringToQDate(death));
-        sqlite3_finalize(stmt);
-        return true;
-    }
-    sqlite3_finalize(stmt);
-    return false;
-}
-
-bool getGenreByID(sqlite3*& DB, int genre_id, Genre& genre) {
-    sqlite3_stmt* stmt;
-    const char* sql = "SELECT NAME FROM GENRES WHERE ID = ?;";
-
-    int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
-
-    sqlite3_bind_int(stmt, 1, genre_id);
-
-    if (sqlite3_step(stmt) == SQLITE_ROW) {
-        const char* name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-        genre = Genre(genre_id, name);
-        sqlite3_finalize(stmt);
-        return true;
-    }
-    sqlite3_finalize(stmt);
-    return false;
-}
-
-bool getUserByID(sqlite3*& DB, int user_id, User& user) {
-    sqlite3_stmt* stmt;
-    const char* sql = "SELECT FORENAME, SURNAME, BIRTH, EMAIL, PHONE FROM USERS WHERE ID = ?;";
-
-    int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
-
-    sqlite3_bind_int(stmt, 1, user_id);
-
-    if (sqlite3_step(stmt) == SQLITE_ROW) {
-        const char* forename = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-        const char* surname = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-        const char* birth = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
-        const char* email = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
-
-        const char* value = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
-        std::string phone = (value == nullptr) ? "" : std::string(value);
-        user = User(user_id, forename, surname, stringToQDate(birth), email, phone);
-        sqlite3_finalize(stmt);
-        return true;
-    }
-    sqlite3_finalize(stmt);
-    return false;
-}
-
-
-bool setBookName(sqlite3*& DB, int book_id, std::string newName) {
+bool setBookName(sqlite3*& DB, int book_id, QString newName) {
     sqlite3_stmt* stmt;
     const char* sql = "UPDATE BOOKS SET TITLE = ? WHERE ID = ?;";
 
@@ -769,7 +765,7 @@ bool setBookName(sqlite3*& DB, int book_id, std::string newName) {
         return false;
     }
 
-    sqlite3_bind_text(stmt, 1, newName.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, newName.toUtf8().constData(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, book_id);
 
     exit = sqlite3_step(stmt);
@@ -798,7 +794,7 @@ bool setBookYear(sqlite3*& DB, int book_id, unsigned short int newYear) {
     return exit == SQLITE_DONE;
 }
 
-bool setAuthorForename(sqlite3*& DB, int author_id, std::string newForename) {
+bool setAuthorForename(sqlite3*& DB, int author_id, QString newForename) {
     sqlite3_stmt* stmt;
     const char* sql = "UPDATE AUTHORS SET FORENAME = ? WHERE ID = ?;";
 
@@ -807,7 +803,7 @@ bool setAuthorForename(sqlite3*& DB, int author_id, std::string newForename) {
         return false;
     }
 
-    sqlite3_bind_text(stmt, 1, newForename.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, newForename.toUtf8().constData(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, author_id);
 
     exit = sqlite3_step(stmt);
@@ -817,7 +813,7 @@ bool setAuthorForename(sqlite3*& DB, int author_id, std::string newForename) {
     return exit == SQLITE_DONE;
 }
 
-bool setAuthorSurname(sqlite3*& DB, int author_id, std::string newSurname) {
+bool setAuthorSurname(sqlite3*& DB, int author_id, QString newSurname) {
     sqlite3_stmt* stmt;
     const char* sql = "UPDATE AUTHORS SET SURNAME = ? WHERE ID = ?;";
 
@@ -826,7 +822,7 @@ bool setAuthorSurname(sqlite3*& DB, int author_id, std::string newSurname) {
         return false;
     }
 
-    sqlite3_bind_text(stmt, 1, newSurname.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, newSurname.toUtf8().constData(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, author_id);
 
     exit = sqlite3_step(stmt);
@@ -836,7 +832,7 @@ bool setAuthorSurname(sqlite3*& DB, int author_id, std::string newSurname) {
     return exit == SQLITE_DONE;
 }
 
-bool setAuthorBio(sqlite3*& DB, int author_id, std::string newBio) {
+bool setAuthorBio(sqlite3*& DB, int author_id, QString newBio) {
     sqlite3_stmt* stmt;
     const char* sql = "UPDATE AUTHORS SET BIO = ? WHERE ID = ?;";
 
@@ -845,8 +841,8 @@ bool setAuthorBio(sqlite3*& DB, int author_id, std::string newBio) {
         return false;
     }
 
-    if (newBio.empty()) sqlite3_bind_null(stmt, 1);
-    else sqlite3_bind_text(stmt, 1, newBio.c_str(), -1, SQLITE_TRANSIENT);
+    if (newBio.isEmpty()) sqlite3_bind_null(stmt, 1);
+    else sqlite3_bind_text(stmt, 1, newBio.toUtf8().constData(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, author_id);
 
     exit = sqlite3_step(stmt);
@@ -865,9 +861,9 @@ bool setAuthorBirthDate(sqlite3*& DB, int author_id, QDate q_newBirthDate) {
         return false;
     }
 
-    std::string newBirthDate = QDateToString(q_newBirthDate);
-    if (newBirthDate.empty()) sqlite3_bind_null(stmt, 1);
-    else sqlite3_bind_text(stmt, 1, newBirthDate.c_str(), -1, SQLITE_TRANSIENT);
+    QString newBirthDate = QDateToString(q_newBirthDate);
+    if (newBirthDate.isEmpty()) sqlite3_bind_null(stmt, 1);
+    else sqlite3_bind_text(stmt, 1, newBirthDate.toUtf8().constData(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, author_id);
 
     exit = sqlite3_step(stmt);
@@ -886,9 +882,9 @@ bool setAuthorDeathDate(sqlite3*& DB, int author_id, QDate q_newDeathDate) {
         return false;
     }
 
-    std::string newDeathDate = QDateToString(q_newDeathDate);
-    if (newDeathDate.empty()) sqlite3_bind_null(stmt, 1);
-    else sqlite3_bind_text(stmt, 1, newDeathDate.c_str(), -1, SQLITE_TRANSIENT);
+    QString newDeathDate = QDateToString(q_newDeathDate);
+    if (newDeathDate.isEmpty()) sqlite3_bind_null(stmt, 1);
+    else sqlite3_bind_text(stmt, 1, newDeathDate.toUtf8().constData(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, author_id);
 
     exit = sqlite3_step(stmt);
@@ -898,7 +894,7 @@ bool setAuthorDeathDate(sqlite3*& DB, int author_id, QDate q_newDeathDate) {
     return exit == SQLITE_DONE;
 }
 
-bool setGenreName(sqlite3*& DB, int genre_id, std::string newName) {
+bool setGenreName(sqlite3*& DB, int genre_id, QString newName) {
     sqlite3_stmt* stmt;
     const char* sql = "UPDATE GENRES SET NAME = ? WHERE ID = ?;";
 
@@ -907,7 +903,7 @@ bool setGenreName(sqlite3*& DB, int genre_id, std::string newName) {
         return false;
     }
 
-    sqlite3_bind_text(stmt, 1, newName.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, newName.toUtf8().constData(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, genre_id);
 
     exit = sqlite3_step(stmt);
@@ -917,7 +913,7 @@ bool setGenreName(sqlite3*& DB, int genre_id, std::string newName) {
     return exit == SQLITE_DONE;
 }
 
-bool setUserForename(sqlite3*& DB, int user_id, std::string newForename) {
+bool setUserForename(sqlite3*& DB, int user_id, QString newForename) {
     sqlite3_stmt* stmt;
     const char* sql = "UPDATE USERS SET FORENAME = ? WHERE ID = ?;";
 
@@ -926,7 +922,7 @@ bool setUserForename(sqlite3*& DB, int user_id, std::string newForename) {
         return false;
     }
 
-    sqlite3_bind_text(stmt, 1, newForename.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, newForename.toUtf8().constData(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, user_id);
 
     exit = sqlite3_step(stmt);
@@ -936,7 +932,7 @@ bool setUserForename(sqlite3*& DB, int user_id, std::string newForename) {
     return exit == SQLITE_DONE;
 }
 
-bool setUserSurname(sqlite3*& DB, int user_id, std::string newSurname) {
+bool setUserSurname(sqlite3*& DB, int user_id, QString newSurname) {
     sqlite3_stmt* stmt;
     const char* sql = "UPDATE USERS SET SURNAME = ? WHERE ID = ?;";
 
@@ -945,7 +941,7 @@ bool setUserSurname(sqlite3*& DB, int user_id, std::string newSurname) {
         return false;
     }
 
-    sqlite3_bind_text(stmt, 1, newSurname.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, newSurname.toUtf8().constData(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, user_id);
 
     exit = sqlite3_step(stmt);
@@ -964,8 +960,8 @@ bool setUserBirth(sqlite3*& DB, int user_id, QDate q_newBirth) {
         return false;
     }
 
-    std::string newBirth = QDateToString(q_newBirth);
-    sqlite3_bind_text(stmt, 1, newBirth.c_str(), -1, SQLITE_TRANSIENT);
+    QString newBirth = QDateToString(q_newBirth);
+    sqlite3_bind_text(stmt, 1, newBirth.toUtf8().constData(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, user_id);
 
     exit = sqlite3_step(stmt);
@@ -975,7 +971,7 @@ bool setUserBirth(sqlite3*& DB, int user_id, QDate q_newBirth) {
     return exit == SQLITE_DONE;
 }
 
-bool setUserEmail(sqlite3*& DB, int user_id, std::string newEmail) {
+bool setUserEmail(sqlite3*& DB, int user_id, QString newEmail) {
     sqlite3_stmt* stmt;
     const char* sql = "UPDATE USERS SET EMAIL = ? WHERE ID = ?;";
 
@@ -984,7 +980,7 @@ bool setUserEmail(sqlite3*& DB, int user_id, std::string newEmail) {
         return false;
     }
 
-    sqlite3_bind_text(stmt, 1, newEmail.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, newEmail.toUtf8().constData(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, user_id);
 
     exit = sqlite3_step(stmt);
@@ -994,7 +990,7 @@ bool setUserEmail(sqlite3*& DB, int user_id, std::string newEmail) {
     return exit == SQLITE_DONE;
 }
 
-bool setUserPhone(sqlite3*& DB, int user_id, std::string newPhone) {
+bool setUserPhone(sqlite3*& DB, int user_id, QString newPhone) {
     sqlite3_stmt* stmt;
     const char* sql = "UPDATE USERS SET PHONE = ? WHERE ID = ?;";
 
@@ -1003,8 +999,8 @@ bool setUserPhone(sqlite3*& DB, int user_id, std::string newPhone) {
         return false;
     }
 
-    if (newPhone.empty()) sqlite3_bind_null(stmt, 1);
-    else sqlite3_bind_text(stmt, 1, newPhone.c_str(), -1, SQLITE_TRANSIENT);
+    if (newPhone.isEmpty()) sqlite3_bind_null(stmt, 1);
+    else sqlite3_bind_text(stmt, 1, newPhone.toUtf8().constData(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, user_id);
 
     exit = sqlite3_step(stmt);
@@ -1021,7 +1017,7 @@ void deleteBookByID(sqlite3*& DB, int book_id) {
 
     int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
     if (exit != SQLITE_OK) {
-        std::cerr << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+        qCritical() << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
         return;
     }
 
@@ -1029,7 +1025,7 @@ void deleteBookByID(sqlite3*& DB, int book_id) {
 
     exit = sqlite3_step(stmt);
     if (exit != SQLITE_DONE) {
-        std::cerr << "Error executing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+        qCritical() << "Error executing SQL statement: " << sqlite3_errmsg(DB) << "\n";
     }
 
     sqlite3_finalize(stmt);
@@ -1041,7 +1037,7 @@ void deleteAuthorByID(sqlite3*& DB, int author_id) {
 
     int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
     if (exit != SQLITE_OK) {
-        std::cerr << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+        qCritical() << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
         return;
     }
 
@@ -1049,7 +1045,7 @@ void deleteAuthorByID(sqlite3*& DB, int author_id) {
 
     exit = sqlite3_step(stmt);
     if (exit != SQLITE_DONE) {
-        std::cerr << "Error executing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+        qCritical() << "Error executing SQL statement: " << sqlite3_errmsg(DB) << "\n";
     }
 
     sqlite3_finalize(stmt);
@@ -1061,7 +1057,7 @@ void deleteGenreByID(sqlite3*& DB, int genre_id) {
 
     int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
     if (exit != SQLITE_OK) {
-        std::cerr << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+        qCritical() << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
         return;
     }
 
@@ -1069,7 +1065,7 @@ void deleteGenreByID(sqlite3*& DB, int genre_id) {
 
     exit = sqlite3_step(stmt);
     if (exit != SQLITE_DONE) {
-        std::cerr << "Error executing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+        qCritical() << "Error executing SQL statement: " << sqlite3_errmsg(DB) << "\n";
     }
 
     sqlite3_finalize(stmt);
@@ -1081,7 +1077,7 @@ void deleteUserByID(sqlite3*& DB, int user_id) {
 
     int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
     if (exit != SQLITE_OK) {
-        std::cerr << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+        qCritical() << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
         return;
     }
 
@@ -1089,55 +1085,12 @@ void deleteUserByID(sqlite3*& DB, int user_id) {
 
     exit = sqlite3_step(stmt);
     if (exit != SQLITE_DONE) {
-        std::cerr << "Error executing SQL statement: " << sqlite3_errmsg(DB) << "\n";
+        qCritical() << "Error executing SQL statement: " << sqlite3_errmsg(DB) << "\n";
     }
 
     sqlite3_finalize(stmt);
 }
 
-
-std::vector<Book> sortBooks(sqlite3*& DB, Value value, bool bLess) {
-    std::vector<Book> books;
-    sqlite3_stmt* stmt;
-    const char* sql = "SELECT ID, TITLE, YEAR FROM BOOKS;";
-
-    int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
-
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int id = sqlite3_column_int(stmt, 0);
-        const char* title = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-        int year = sqlite3_column_int(stmt, 2);
-
-        Book book(id, title, year);
-        books.push_back(book);
-    }
-    sqlite3_finalize(stmt);
-    switch (value) {
-    case ID: {
-        std::sort(books.begin(), books.end(), [bLess](const Book& a, const Book& b) {
-            return bLess ? a.id < b.id : a.id > b.id;
-        });
-        break;
-    }
-    case TITLE: {
-        std::sort(books.begin(), books.end(), [bLess](const Book& a, const Book& b) {
-            return bLess ? a.title < b.title : a.title > b.title;
-        });
-        break;
-    }
-    case YEAR: {
-        std::sort(books.begin(), books.end(), [bLess](const Book& a, const Book& b) {
-            return bLess ? a.year < b.year : a.year > b.year;
-        });
-        break;
-    }
-    default: {
-        say("WRONG VALUE FIELD");
-        break;
-    }
-    }
-    return books;
-}
 
 void sortBooks(std::vector<Book>& books, Value value, bool bLess) {
     switch (value) {
@@ -1160,71 +1113,10 @@ void sortBooks(std::vector<Book>& books, Value value, bool bLess) {
         break;
     }
     default: {
-        say("WRONG VALUE FIELD");
+        qDebug("WRONG VALUE FIELD");
         break;
     }
     }
-}
-
-std::vector<Author> sortAuthors(sqlite3*& DB, Value value, bool bLess) {
-    std::vector<Author> authors;
-    sqlite3_stmt* stmt;
-    const char* sql = "SELECT ID, FORENAME, SURNAME, BIO, BIRTH, DEATH FROM AUTHORS;";
-
-    int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
-
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int id = sqlite3_column_int(stmt, 0);
-        const char* forename = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-        const char* surname = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
-        const char* value = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
-        std::string bio = (value == nullptr) ? "" : std::string(value);
-        const char* b_date = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
-
-        value = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
-        std::string d_date = (value == nullptr) ? "" : std::string(value);
-
-        Author author(id, forename, surname, bio, stringToQDate(b_date), stringToQDate(d_date));
-        authors.push_back(author);
-    }
-    sqlite3_finalize(stmt);
-    switch (value) {
-    case ID: {
-        std::sort(authors.begin(), authors.end(), [bLess](const Author& a, const Author& b) {
-            return bLess ? a.id < b.id : a.id > b.id;
-        });
-        break;
-    }
-    case FORENAME: {
-        std::sort(authors.begin(), authors.end(), [bLess](const Author& a, const Author& b) {
-            return bLess ? a.forename < b.forename : a.forename > b.forename;
-        });
-        break;
-    }
-    case SURNAME: {
-        std::sort(authors.begin(), authors.end(), [bLess](const Author& a, const Author& b) {
-            return bLess ? a.surname < b.surname : a.surname > b.surname;
-        });
-        break;
-    }
-    case BIRTH: {
-        std::sort(authors.begin(), authors.end(), [bLess](const Author& a, const Author& b) {
-            return bLess ? a.birth < b.birth : a.birth > b.birth;
-        });
-        break;
-    }
-    case DEATH: {
-        std::sort(authors.begin(), authors.end(), [bLess](const Author& a, const Author& b) {
-            return bLess ? a.death < b.death : a.death > b.death;
-        });
-        break;
-    }
-    default: {
-        say("WRONG VALUE FIELD");
-        break;
-    }
-    }
-    return authors;
 }
 
 void sortAuthors(std::vector<Author>& authors, Value value, bool bLess) {
@@ -1260,46 +1152,10 @@ void sortAuthors(std::vector<Author>& authors, Value value, bool bLess) {
         break;
     }
     default: {
-        say("WRONG VALUE FIELD");
+        qDebug("WRONG VALUE FIELD");
         break;
     }
     }
-}
-
-std::vector<Genre> sortGenres(sqlite3*& DB, Value value, bool bLess) {
-    std::vector<Genre> genres;
-    sqlite3_stmt* stmt;
-    const char* sql = "SELECT ID, NAME FROM GENRES;";
-
-    int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
-
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int id = sqlite3_column_int(stmt, 0);
-        const char* name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-
-        Genre genre(id, name);
-        genres.push_back(genre);
-    }
-    sqlite3_finalize(stmt);
-    switch (value) {
-    case ID: {
-        std::sort(genres.begin(), genres.end(), [bLess](const Genre& a, const Genre& b) {
-            return bLess ? a.id < b.id : a.id > b.id;
-        });
-        break;
-    }
-    case NAME: {
-        std::sort(genres.begin(), genres.end(), [bLess](const Genre& a, const Genre& b) {
-            return bLess ? a.name < b.name : a.name > b.name;
-        });
-        break;
-    }
-    default: {
-        say("WRONG VALUE FIELD");
-        break;
-    }
-    }
-    return genres;
 }
 
 void sortGenres(std::vector<Genre>& genres, Value value, bool bLess) {
@@ -1317,64 +1173,10 @@ void sortGenres(std::vector<Genre>& genres, Value value, bool bLess) {
         break;
     }
     default: {
-        say("WRONG VALUE FIELD");
+        qDebug("WRONG VALUE FIELD");
         break;
     }
     }
-}
-
-std::vector<User> sortUsers(sqlite3*& DB, Value value, bool bLess) {
-    std::vector<User> users;
-    sqlite3_stmt* stmt;
-    const char* sql = "SELECT ID, FORENAME, SURNAME, BIRTH, EMAIL, PHONE FROM USERS;";
-
-    int exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
-
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int id = sqlite3_column_int(stmt, 0);
-        const char* forename = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-        const char* surname = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
-        const char* birth = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
-        const char* email = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
-
-        const char* value = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
-        std::string phone = (value == nullptr) ? "" : std::string(value);
-
-        User user = User(id, forename, surname, stringToQDate(birth), email, phone);
-        users.push_back(user);
-    }
-    sqlite3_finalize(stmt);
-    switch (value) {
-    case ID: {
-        std::sort(users.begin(), users.end(), [bLess](const User& a, const User& b) {
-            return bLess ? a.id < b.id : a.id > b.id;
-        });
-        break;
-    }
-    case FORENAME: {
-        std::sort(users.begin(), users.end(), [bLess](const User& a, const User& b) {
-            return bLess ? a.forename < b.forename : a.forename > b.forename;
-        });
-        break;
-    }
-    case SURNAME: {
-        std::sort(users.begin(), users.end(), [bLess](const User& a, const User& b) {
-            return bLess ? a.surname < b.surname : a.surname > b.surname;
-        });
-        break;
-    }
-    case BIRTH: {
-        std::sort(users.begin(), users.end(), [bLess](const User& a, const User& b) {
-            return bLess ? a.birth < b.birth : a.birth > b.birth;
-        });
-        break;
-    }
-    default: {
-        say("WRONG VALUE FIELD");
-        break;
-    }
-    }
-    return users;
 }
 
 void sortUsers(std::vector<User>& users, Value value, bool bLess) {
@@ -1404,7 +1206,7 @@ void sortUsers(std::vector<User>& users, Value value, bool bLess) {
         break;
     }
     default: {
-        say("WRONG VALUE FIELD");
+        qDebug("WRONG VALUE FIELD");
         break;
     }
     }

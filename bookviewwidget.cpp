@@ -82,7 +82,7 @@ void BookViewWidget::openBookByID(sqlite3*& DB, int book_id) {
     bool bCorrectID = getBookByID(DB, book_id, book);
     if (bCorrectID) {
         // Display title
-        titleValueLabel->setText(QString::fromStdString(book.title));
+        titleValueLabel->setText(book.title);
 
         // Display author(s)
         std::vector<Author> resultAuthors;
@@ -90,16 +90,16 @@ void BookViewWidget::openBookByID(sqlite3*& DB, int book_id) {
 
         if (resultAuthors.size() > 1) {
             authorFieldLabel->setText("Authors:");
-            std::string newAuthorsList;
+            QString newAuthorsList;
             for (unsigned long long i = 0; i < resultAuthors.size() - 1; i++) {
                 newAuthorsList += resultAuthors[i].forename + " " + resultAuthors[i].surname = ", ";
             }
             newAuthorsList += resultAuthors.back().forename + " " + resultAuthors.back().surname;
-            authorValueLabel->setText(QString::fromStdString(newAuthorsList));
+            authorValueLabel->setText(newAuthorsList);
         }
         else {
             authorFieldLabel->setText("Author:");
-            authorValueLabel->setText(QString::fromStdString(resultAuthors[0].forename + " " + resultAuthors[0].surname));
+            authorValueLabel->setText(resultAuthors[0].forename + " " + resultAuthors[0].surname);
         }
 
         // Display year

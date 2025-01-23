@@ -85,7 +85,7 @@ void AuthorViewWidget::openAuthorByID(sqlite3*& DB, int author_id) {
     bool bCorrectID = getAuthorByID(DB, author_id, author);
     if (bCorrectID) {
         // Display Name
-        nameValueLabel->setText(QString::fromStdString(author.forename + " " + author.surname));
+        nameValueLabel->setText(author.forename + " " + author.surname);
 
         // Display Lifetime
         if (author.death.isValid())
@@ -97,7 +97,7 @@ void AuthorViewWidget::openAuthorByID(sqlite3*& DB, int author_id) {
         IDValueLabel->setText(QString::number(author.id));
 
         // Display Biography
-        bioValueLabel->setText(QString::fromStdString(author.bio));
+        bioValueLabel->setText(author.bio);
     }
     else {
         qDebug() << "Error: Incorrect Author ID!";
