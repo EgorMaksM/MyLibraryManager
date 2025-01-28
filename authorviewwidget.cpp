@@ -28,6 +28,7 @@ AuthorViewWidget::AuthorViewWidget(QWidget *parent)
     nameValueLabel = new QLabel(this);
     nameFieldLabel->setText("Name:");
     nameValueLabel->setText("-");
+    nameValueLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     nameLayout->addWidget(nameFieldLabel, 0, Qt::AlignLeft | Qt::AlignVCenter);
     nameLayout->addStretch();
     nameLayout->addWidget(nameValueLabel, 0, Qt::AlignRight | Qt::AlignVCenter);
@@ -39,6 +40,7 @@ AuthorViewWidget::AuthorViewWidget(QWidget *parent)
     lifetimeValueLabel = new QLabel(this);
     lifetimeFieldLabel->setText("Lifetime:");
     lifetimeValueLabel->setText("-");
+    lifetimeValueLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     lifetimeLayout->addWidget(lifetimeFieldLabel, 0, Qt::AlignLeft | Qt::AlignVCenter);
     lifetimeLayout->addStretch();
     lifetimeLayout->addWidget(lifetimeValueLabel, 0, Qt::AlignRight | Qt::AlignVCenter);
@@ -50,6 +52,7 @@ AuthorViewWidget::AuthorViewWidget(QWidget *parent)
     IDValueLabel = new QLabel(this);
     IDFieldLabel->setText("ID:");
     IDValueLabel->setText("-");
+    IDValueLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     IDLayout->addWidget(IDFieldLabel, 0, Qt::AlignLeft | Qt::AlignVCenter);
     IDLayout->addStretch();
     IDLayout->addWidget(IDValueLabel, 0, Qt::AlignRight | Qt::AlignVCenter);
@@ -61,6 +64,7 @@ AuthorViewWidget::AuthorViewWidget(QWidget *parent)
     bioValueLabel = new QLabel(this);
     bioFieldLabel->setText("Bio:");
     bioValueLabel->setText("-");
+    bioValueLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     bioValueLabel->setWordWrap(true);
     bioValueLabel->setAlignment(Qt::AlignRight | Qt::AlignHCenter);
     bioLayout->addWidget(bioFieldLabel, 0, Qt::AlignLeft | Qt::AlignVCenter);
@@ -80,27 +84,20 @@ AuthorViewWidget::~AuthorViewWidget()
     delete ui;
 }
 
-void AuthorViewWidget::openAuthorByID(sqlite3*& DB, int author_id) {
-    Author author;
-    bool bCorrectID = getAuthorByID(DB, author_id, author);
-    if (bCorrectID) {
-        // Display Name
-        nameValueLabel->setText(author.forename + " " + author.surname);
+void AuthorViewWidget::openAuthor(Author& author) {
+    // Display Name
+    nameValueLabel->setText(author.forename + " " + author.surname);
 
-        // Display Lifetime
-        if (author.death.isValid())
-        lifetimeValueLabel->setText(QLocale().toString(author.birth, "MMMM d, yyyy") + "-" + QLocale().toString(author.death, "MMMM d, yyyy"));
-        else
-            lifetimeValueLabel->setText(QLocale().toString(author.birth, "MMMM d, yyyy") + " - Present day");
+    // Display Lifetime
+    if (author.death.isValid())
+    lifetimeValueLabel->setText(QLocale().toString(author.birth, "MMMM d, yyyy") + "-" + QLocale().toString(author.death, "MMMM d, yyyy"));
+    else
+        lifetimeValueLabel->setText(QLocale().toString(author.birth, "MMMM d, yyyy") + " - Present day");
 
-        // Display ID
-        IDValueLabel->setText(QString::number(author.id));
+    // Display ID
+    IDValueLabel->setText(QString::number(author.id));
 
-        // Display Biography
-        bioValueLabel->setText(author.bio);
-    }
-    else {
-        qDebug() << "Error: Incorrect Author ID!";
-    }
+    // Display Biography
+    bioValueLabel->setText(author.bio);
 }
 

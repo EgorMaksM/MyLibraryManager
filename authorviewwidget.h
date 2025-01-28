@@ -20,7 +20,7 @@ public:
     explicit AuthorViewWidget(QWidget *parent = nullptr);
     ~AuthorViewWidget();
 
-    void openAuthorByID(sqlite3*& DB, int author_id);
+    void openAuthor(Author& author);
 
 private:
     Ui::AuthorViewWidget *ui;

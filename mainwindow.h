@@ -7,6 +7,7 @@
 #include <QWidget>
 #include <QSplitter>
 #include <QStackedWidget>
+#include <QPushButton>
 
 #include "bookviewwidget.h"
 #include "authorviewwidget.h"
@@ -28,8 +29,8 @@ public:
     ~MainWindow();
 
     QSplitter* centralWidget;
-    QVBoxLayout* mainLayout;
-    QWidget* mainLayoutWidget;
+    QVBoxLayout* controlsLayout;
+    QWidget* controlsLayoutWidget;
 
     QSplitter* browsingWidget;
     TableViewWidget* tableWidget;
@@ -43,5 +44,7 @@ public:
 private:
     Ui::MainWindow *ui;
     sqlite3*& DB;
+
+    void onObjectSelected(int row, int column);
 };
 #endif // MAINWINDOW_H

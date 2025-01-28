@@ -28,6 +28,7 @@ UserViewWidget::UserViewWidget(QWidget *parent)
     nameValueLabel = new QLabel(this);
     nameFieldLabel->setText("Name:");
     nameValueLabel->setText("-");
+    nameValueLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     nameLayout->addWidget(nameFieldLabel, 0, Qt::AlignLeft | Qt::AlignVCenter);
     nameLayout->addStretch();
     nameLayout->addWidget(nameValueLabel, 0, Qt::AlignRight | Qt::AlignVCenter);
@@ -39,6 +40,7 @@ UserViewWidget::UserViewWidget(QWidget *parent)
     birthValueLabel = new QLabel(this);
     birthFieldLabel->setText("Birth Date:");
     birthValueLabel->setText("-");
+    birthValueLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     birthLayout->addWidget(birthFieldLabel, 0, Qt::AlignLeft | Qt::AlignVCenter);
     birthLayout->addStretch();
     birthLayout->addWidget(birthValueLabel, 0, Qt::AlignRight | Qt::AlignVCenter);
@@ -50,6 +52,7 @@ UserViewWidget::UserViewWidget(QWidget *parent)
     emailValueLabel = new QLabel(this);
     emailFieldLabel->setText("Email:");
     emailValueLabel->setText("-");
+    emailValueLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     emailValueLabel->setWordWrap(true);
     emailValueLabel->setAlignment(Qt::AlignRight | Qt::AlignHCenter);
     emailLayout->addWidget(emailFieldLabel, 0, Qt::AlignLeft | Qt::AlignVCenter);
@@ -63,6 +66,7 @@ UserViewWidget::UserViewWidget(QWidget *parent)
     phoneValueLabel = new QLabel(this);
     phoneFieldLabel->setText("Phone Number:");
     phoneValueLabel->setText("-");
+    phoneValueLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     phoneValueLabel->setWordWrap(true);
     phoneValueLabel->setAlignment(Qt::AlignRight | Qt::AlignHCenter);
     phoneLayout->addWidget(phoneFieldLabel, 0, Qt::AlignLeft | Qt::AlignVCenter);
@@ -76,6 +80,7 @@ UserViewWidget::UserViewWidget(QWidget *parent)
     IDValueLabel = new QLabel(this);
     IDFieldLabel->setText("ID:");
     IDValueLabel->setText("-");
+    IDValueLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     IDLayout->addWidget(IDFieldLabel, 0, Qt::AlignLeft | Qt::AlignVCenter);
     IDLayout->addStretch();
     IDLayout->addWidget(IDValueLabel, 0, Qt::AlignRight | Qt::AlignVCenter);
@@ -92,34 +97,27 @@ UserViewWidget::~UserViewWidget()
     delete ui;
 }
 
-void UserViewWidget::openUserByID(sqlite3*& DB, int user_id) {
-    User user;
-    bool bCorrectID = getUserByID(DB, user_id, user);
-    if (bCorrectID) {
-        // Display Name
-        nameValueLabel->setText(user.forename + " " + user.surname);
+void UserViewWidget::openUser(User& user) {
+    // Display Name
+    nameValueLabel->setText(user.forename + " " + user.surname);
 
-        // Display Birthdate
-        QDate today = QDate::currentDate();
-        int years = today.year() - user.birth.year();
-        if ((today.month() * 30 + today.day()) < (user.birth.month() * 30 + user.birth.day())) years -= 1;
-        birthValueLabel->setText(QLocale().toString(user.birth, "MMMM d, yyyy") + " (" + QString::number(years) + " years)");
+    // Display Birthdate
+    QDate today = QDate::currentDate();
+    int years = today.year() - user.birth.year();
+    if ((today.month() * 30 + today.day()) < (user.birth.month() * 30 + user.birth.day())) years -= 1;
+    birthValueLabel->setText(QLocale().toString(user.birth, "MMMM d, yyyy") + " (" + QString::number(years) + " years)");
 
-        // Display Email
-        emailValueLabel->setText(user.email);
+    // Display Email
+    emailValueLabel->setText(user.email);
 
-        // Display Phone
-        if (user.phone.isEmpty())
-            phoneValueLabel->setText(QString::fromStdString("No phone number"));
-        else
-            phoneValueLabel->setText(user.phone);
+    // Display Phone
+    if (user.phone.isEmpty())
+        phoneValueLabel->setText(QString::fromStdString("No phone number"));
+    else
+        phoneValueLabel->setText(user.phone);
 
-        // Display ID
-        IDValueLabel->setText(QString::number(user.id));
-    }
-    else {
-        qDebug() << "Error: Incorrect Author ID!";
-    }
+    // Display ID
+    IDValueLabel->setText(QString::number(user.id));
 }
 
 int UserViewWidget::getYears(const QDate& date) {

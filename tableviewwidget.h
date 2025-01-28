@@ -26,10 +26,17 @@ public:
     void populateTable(std::vector<Author> authors);
     void populateTable(std::vector<User> users);
 
+    enum TableFilling {
+        BOOK,
+        AUTHOR,
+        USER
+    };
+
+    TableFilling curObjectType;
+    QTableWidget* gridWidget;
+
 private:
     Ui::TableViewWidget *ui;
-
-    QTableWidget* gridWidget;
 
     sqlite3*& DB;
 };

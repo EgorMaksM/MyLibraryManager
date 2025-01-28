@@ -28,6 +28,7 @@ BookViewWidget::BookViewWidget(QWidget *parent)
     titleValueLabel = new QLabel(this);
     titleFieldLabel->setText("Title:");
     titleValueLabel->setText("-");
+    titleValueLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     titleLayout->addWidget(titleFieldLabel, 0, Qt::AlignLeft | Qt::AlignVCenter);
     titleLayout->addStretch();
     titleLayout->addWidget(titleValueLabel, 0, Qt::AlignRight | Qt::AlignVCenter);
@@ -39,6 +40,7 @@ BookViewWidget::BookViewWidget(QWidget *parent)
     authorValueLabel = new QLabel(this);
     authorFieldLabel->setText("Author:");
     authorValueLabel->setText("-");
+    authorValueLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     authorLayout->addWidget(authorFieldLabel, 0, Qt::AlignLeft | Qt::AlignVCenter);
     authorLayout->addStretch();
     authorLayout->addWidget(authorValueLabel, 0, Qt::AlignRight | Qt::AlignVCenter);
@@ -50,6 +52,7 @@ BookViewWidget::BookViewWidget(QWidget *parent)
     yearValueLabel = new QLabel(this);
     yearFieldLabel->setText("Year:");
     yearValueLabel->setText("-");
+    yearValueLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     yearLayout->addWidget(yearFieldLabel, 0, Qt::AlignLeft | Qt::AlignVCenter);
     yearLayout->addStretch();
     yearLayout->addWidget(yearValueLabel, 0, Qt::AlignRight | Qt::AlignVCenter);
@@ -61,6 +64,7 @@ BookViewWidget::BookViewWidget(QWidget *parent)
     IDValueLabel = new QLabel(this);
     IDFieldLabel->setText("ID:");
     IDValueLabel->setText("-");
+    IDValueLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     IDLayout->addWidget(IDFieldLabel, 0, Qt::AlignLeft | Qt::AlignVCenter);
     IDLayout->addStretch();
     IDLayout->addWidget(IDValueLabel, 0, Qt::AlignRight | Qt::AlignVCenter);
@@ -77,37 +81,30 @@ BookViewWidget::~BookViewWidget()
     delete ui;
 }
 
-void BookViewWidget::openBookByID(sqlite3*& DB, int book_id) {
-    Book book;
-    bool bCorrectID = getBookByID(DB, book_id, book);
-    if (bCorrectID) {
-        // Display title
-        titleValueLabel->setText(book.title);
+void BookViewWidget::openBook(sqlite3*& DB, Book& book) {
+    // Display title
+    titleValueLabel->setText(book.title);
 
-        // Display author(s)
-        std::vector<Author> resultAuthors;
-        getAuthorsByBookID(DB, book_id, resultAuthors);
+    // Display author(s)
+    std::vector<Author> resultAuthors;
+    getAuthorsByBookID(DB, book.id, resultAuthors);
 
-        if (resultAuthors.size() > 1) {
-            authorFieldLabel->setText("Authors:");
-            QString newAuthorsList;
-            for (unsigned long long i = 0; i < resultAuthors.size() - 1; i++) {
-                newAuthorsList += resultAuthors[i].forename + " " + resultAuthors[i].surname = ", ";
-            }
-            newAuthorsList += resultAuthors.back().forename + " " + resultAuthors.back().surname;
-            authorValueLabel->setText(newAuthorsList);
+    if (resultAuthors.size() > 1) {
+        authorFieldLabel->setText("Authors:");
+        QString newAuthorsList;
+        for (unsigned long long i = 0; i < resultAuthors.size() - 1; i++) {
+            newAuthorsList += resultAuthors[i].forename + " " + resultAuthors[i].surname = ", ";
         }
-        else {
-            authorFieldLabel->setText("Author:");
-            authorValueLabel->setText(resultAuthors[0].forename + " " + resultAuthors[0].surname);
-        }
-
-        // Display year
-        yearValueLabel->setText(QString::number(book.year));
-        // Display ID
-        IDValueLabel->setText(QString::number(book_id));
+        newAuthorsList += resultAuthors.back().forename + " " + resultAuthors.back().surname;
+        authorValueLabel->setText(newAuthorsList);
     }
     else {
-        qDebug() << "Error: Incorrect Book ID!";
+        authorFieldLabel->setText("Author:");
+        authorValueLabel->setText(resultAuthors[0].forename + " " + resultAuthors[0].surname);
     }
+
+    // Display year
+    yearValueLabel->setText(QString::number(book.year));
+    // Display ID
+    IDValueLabel->setText(QString::number(book.id));
 }

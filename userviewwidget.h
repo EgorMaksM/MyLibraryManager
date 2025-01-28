@@ -20,7 +20,7 @@ public:
     explicit UserViewWidget(QWidget *parent = nullptr);
     ~UserViewWidget();
 
-    void openUserByID(sqlite3*& DB, int user_id);
+    void openUser(User& user);
 
 private:
     Ui::UserViewWidget *ui;
