@@ -13,6 +13,7 @@
 #include "authorviewwidget.h"
 #include "userviewwidget.h"
 #include "tableviewwidget.h"
+#include "addbookdialog.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -46,5 +47,9 @@ private:
     sqlite3*& DB;
 
     void onObjectSelected(int row, int column);
+
+    void setupNewBtn();
+    void openAddBookDialog();
+
 };
 #endif // MAINWINDOW_H

@@ -29,13 +29,20 @@ MainWindow::MainWindow(sqlite3*& DB, QWidget *parent)
     // Controls
     controlsLayoutWidget->setLayout(controlsLayout);
     browsingWidget->addWidget(controlsLayoutWidget);
+    controlsLayoutWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    setupNewBtn();
+    browsingWidget->setCollapsible(0, false);
 
     // Table
     browsingWidget->addWidget(tableWidget);
     connect(tableWidget->gridWidget, &QTableWidget::cellDoubleClicked, this, &MainWindow::onObjectSelected);
+    browsingWidget->setSizes({20, 1000});
+    browsingWidget->setCollapsible(1, false);
 
 
     // Selection Overview
+    centralWidget->setCollapsible(0, false);
+    centralWidget->setCollapsible(1, false);
     QWidget* container = new QWidget(this);
     QVBoxLayout* layout = new QVBoxLayout(container);
     container->setLayout(layout);
@@ -94,4 +101,52 @@ void MainWindow::onObjectSelected(int row, int column) {
     default:
             qDebug() << "Idk. Look into MainWindow::onObjectSelected";
     }
+}
+
+void MainWindow::setupNewBtn() {
+    QPushButton* dropdownButton = new QPushButton("+", this);
+    dropdownButton->setFixedSize(35, 35);
+    dropdownButton->setStyleSheet(
+        "QPushButton::menu-indicator { width: 0px; height: 0px; }"
+        "QPushButton { text-align: center; padding: 0px; }"
+        );
+
+    QMenu* menu = new QMenu(dropdownButton);
+    menu->setStyleSheet(
+        "QMenu {"
+        "    padding: 0px;"
+        "    margin: 0px;"
+        "    border: 1px solid #dcdcdc;"
+        "    background-color: #212121;"
+        "    border-radius: 0px;"
+        "}"
+        "QMenu::item {"
+        "    padding: 4px 8px;"
+        "    margin: 0px;"
+        "}"
+        "QMenu::item:selected {"
+        "    background-color: #303030;" // Optional: hover effect
+        "}"
+        );
+
+    QAction* option1 = menu->addAction("New Book");
+    QAction* option2 = menu->addAction("New Author");
+    QAction* option3 = menu->addAction("New User");
+
+    //connect(option1, &QAction::triggered, this, &MainWindow::onOption1Clicked);
+    //connect(option2, &QAction::triggered, this, &MainWindow::onOption2Clicked);
+    //connect(option3, &QAction::triggered, this, &MainWindow::onOption3Clicked);
+
+    dropdownButton->setMenu(menu);
+
+    controlsLayout->addWidget(dropdownButton, 0, Qt::AlignLeft | Qt::AlignTop);
+}
+
+void MainWindow::openAddBookDialog() {
+    AddBookDialog* dialog = new AddBookDialog(this);
+
+    // Connect the dialog's signal to addBook
+    connect(dialog, &AddBookDialog::bookAdded, this, &MainWindow::addBook);
+
+    dialog->exec(); // Show dialog as a modal
 }
