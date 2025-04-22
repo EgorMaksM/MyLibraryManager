@@ -3,9 +3,11 @@
 
 #include <QDialog>
 #include <QLineEdit>
+#include <QSpinBox>
 #include <QIntValidator>
 #include <QPushButton>
 #include <QVboxLayout>
+#include <QDate>
 
 namespace Ui {
 class AddBookDialog;
@@ -19,11 +21,17 @@ public:
     explicit AddBookDialog(QWidget *parent = nullptr);
     ~AddBookDialog();
 
+    QLineEdit* titleInput;
+    QSpinBox* yearInput;
+
+signals:
+    void bookSubmitted(const QString& title, int year);
+
 private:
     Ui::AddBookDialog *ui;
 
-    QLineEdit* titleInput;
-    QLineEdit* yearInput;
+private slots:
+    void onSubmitClicked();
 };
 
 #endif // ADDBOOKDIALOG_H

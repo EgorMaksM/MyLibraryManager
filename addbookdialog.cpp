@@ -15,15 +15,13 @@ AddBookDialog::AddBookDialog(QWidget *parent)
     titleInput = new QLineEdit(this);
     titleInput->setPlaceholderText("Enter book title");
 
-    yearInput = new QLineEdit(this);
-    yearInput->setPlaceholderText("Enter publication year");
+    yearInput = new QSpinBox(this);
+    yearInput->setMinimum(0);
+    yearInput->setMaximum(QDate::currentDate().year());
+    yearInput->clear();
 
-    // Restrict year input to numbers
-    yearInput->setValidator(new QIntValidator(0, 9999, this));
-
-    // Create Submit button
     QPushButton* submitButton = new QPushButton("Submit", this);
-    //connect(submitButton, &QPushButton::clicked, this, &AddBookDialog::onSubmitClicked);
+    connect(submitButton, &QPushButton::clicked, this, &AddBookDialog::onSubmitClicked);
 
     // Layout
     QVBoxLayout* layout = new QVBoxLayout(this);
@@ -37,4 +35,11 @@ AddBookDialog::AddBookDialog(QWidget *parent)
 AddBookDialog::~AddBookDialog()
 {
     delete ui;
+}
+
+void AddBookDialog::onSubmitClicked() {
+    QString title = titleInput->text();
+    int year = yearInput->value();
+    emit bookSubmitted(title, year);
+    this->accept();
 }

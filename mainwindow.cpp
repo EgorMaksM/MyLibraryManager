@@ -133,20 +133,23 @@ void MainWindow::setupNewBtn() {
     QAction* option2 = menu->addAction("New Author");
     QAction* option3 = menu->addAction("New User");
 
-    //connect(option1, &QAction::triggered, this, &MainWindow::onOption1Clicked);
-    //connect(option2, &QAction::triggered, this, &MainWindow::onOption2Clicked);
-    //connect(option3, &QAction::triggered, this, &MainWindow::onOption3Clicked);
+    connect(option1, &QAction::triggered, this, [this]() { openDialog(0); });
+    connect(option2, &QAction::triggered, this, [this]() { openDialog(1); });
+    connect(option3, &QAction::triggered, this, [this]() { openDialog(2); });
 
     dropdownButton->setMenu(menu);
 
     controlsLayout->addWidget(dropdownButton, 0, Qt::AlignLeft | Qt::AlignTop);
 }
 
-void MainWindow::openAddBookDialog() {
-    AddBookDialog* dialog = new AddBookDialog(this);
-
-    // Connect the dialog's signal to addBook
-    connect(dialog, &AddBookDialog::bookAdded, this, &MainWindow::addBook);
-
-    dialog->exec(); // Show dialog as a modal
+void MainWindow::openDialog(int objectType) {  // 0 -> Book; 1 -> Author; 2 -> User
+    if (objectType == 0) {
+        AddBookDialog* dialog = new AddBookDialog(this);
+        connect(dialog, &AddBookDialog::bookSubmitted, this, [this](const QString& title, int year){
+            addBook(DB, title, year);
+        });
+        dialog->exec();
+        //std::vector<Book> books = getBooks(DB);
+        //tableWidget->populateTable(books);
+    }
 }

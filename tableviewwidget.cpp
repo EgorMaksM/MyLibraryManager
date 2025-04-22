@@ -51,7 +51,7 @@ TableViewWidget::TableViewWidget(sqlite3*& DB, QWidget *parent)
     std::vector<Book> books = getBooks(DB);
     std::vector<Author> authors = getAuthors(DB);
     std::vector<User> users = getUsers(DB);
-    populateTable(users);
+    populateTable(books);
 }
 
 TableViewWidget::~TableViewWidget()

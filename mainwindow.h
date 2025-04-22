@@ -49,7 +49,7 @@ private:
     void onObjectSelected(int row, int column);
 
     void setupNewBtn();
-    void openAddBookDialog();
+    void openDialog(int objectType); // 0 -> Book; 1 -> Author; 2 -> User
 
 };
 #endif // MAINWINDOW_H
