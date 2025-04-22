@@ -144,12 +144,13 @@ void MainWindow::setupNewBtn() {
 
 void MainWindow::openDialog(int objectType) {  // 0 -> Book; 1 -> Author; 2 -> User
     if (objectType == 0) {
-        AddBookDialog* dialog = new AddBookDialog(this);
+        AddBookDialog* dialog = new AddBookDialog(DB, this);
         connect(dialog, &AddBookDialog::bookSubmitted, this, [this](const QString& title, int year){
-            addBook(DB, title, year);
+            int bookID = addBook(DB, title, year);
+            linkAuthorToBook(DB, 1, bookID);
         });
         dialog->exec();
-        //std::vector<Book> books = getBooks(DB);
-        //tableWidget->populateTable(books);
+        std::vector<Book> books = getBooks(DB);
+        tableWidget->populateTable(books);
     }
 }

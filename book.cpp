@@ -6,7 +6,7 @@ bool operator==(const Book& book, const Book& other) {
            book.year == other.year;
 }
 
-void addBook(sqlite3*& DB, QString title, unsigned short int year) {
+int addBook(sqlite3*& DB, QString title, unsigned short int year) {
     sqlite3_stmt* stmt;
     const char* sql = "INSERT INTO BOOKS (TITLE, YEAR) VALUES (?, ?);";
     int exit = 0;
@@ -14,7 +14,7 @@ void addBook(sqlite3*& DB, QString title, unsigned short int year) {
     exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
     if (exit != SQLITE_OK) {
         qCritical() << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
-        return;
+        return -1;
     }
 
     sqlite3_bind_text(stmt, 1, title.toUtf8().constData(), -1, SQLITE_STATIC);
@@ -28,6 +28,8 @@ void addBook(sqlite3*& DB, QString title, unsigned short int year) {
         qDebug() << "Book inserted successfully!";
     }
     sqlite3_finalize(stmt);
+
+    return static_cast<int>(sqlite3_last_insert_rowid(DB));
 }
 
 bool getBookByID(sqlite3*& DB, int book_id, Book& book) {

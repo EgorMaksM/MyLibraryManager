@@ -9,7 +9,7 @@ bool operator==(const User& user, const User& other) {
            user.phone == other.phone;
 }
 
-void addUser(sqlite3*& DB, QString forename, QString surname, QDate q_birth, QString email, QString phone) {
+int addUser(sqlite3*& DB, QString forename, QString surname, QDate q_birth, QString email, QString phone) {
     sqlite3_stmt* stmt;
     const char* sql = "INSERT INTO USERS (FORENAME, SURNAME, BIRTH, EMAIL, PHONE) VALUES (?, ?, ?, ?, ?);";
     int exit = 0;
@@ -18,7 +18,7 @@ void addUser(sqlite3*& DB, QString forename, QString surname, QDate q_birth, QSt
     exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
     if (exit != SQLITE_OK) {
         qCritical() << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
-        return;
+        return -1;
     }
 
     sqlite3_bind_text(stmt, 1, forename.toUtf8().constData(), -1, SQLITE_STATIC);
@@ -38,6 +38,8 @@ void addUser(sqlite3*& DB, QString forename, QString surname, QDate q_birth, QSt
     }
 
     sqlite3_finalize(stmt);
+
+    return static_cast<int>(sqlite3_last_insert_rowid(DB));
 }
 
 bool getUserByID(sqlite3*& DB, int user_id, User& user) {

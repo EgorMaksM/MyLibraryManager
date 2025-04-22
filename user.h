@@ -19,7 +19,7 @@ struct User {
 
 bool operator==(const User& user, const User& other);
 
-void addUser(sqlite3*& DB, QString forename, QString surname, QDate q_birth, QString email, QString phone = "");
+int addUser(sqlite3*& DB, QString forename, QString surname, QDate q_birth, QString email, QString phone = "");
 
 bool getUserByID(sqlite3*& DB, int user_id, User& user);
 std::vector<User> getUsers(sqlite3*& DB);

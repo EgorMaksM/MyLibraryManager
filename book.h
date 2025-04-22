@@ -16,7 +16,7 @@ struct Book {
 
 bool operator==(const Book& book, const Book& other);
 
-void addBook(sqlite3*& DB, QString title, unsigned short int year);
+int addBook(sqlite3*& DB, QString title, unsigned short int year);
 
 bool getBookByID(sqlite3*& DB, int book_id, Book& book);
 std::vector<Book> getBooks(sqlite3*& DB);

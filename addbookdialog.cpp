@@ -1,15 +1,17 @@
 #include "addbookdialog.h"
+#include "author.h"
 #include "ui_addbookdialog.h"
 
-AddBookDialog::AddBookDialog(QWidget *parent)
+AddBookDialog::AddBookDialog(sqlite3*& DB, QWidget *parent)
     : QDialog(parent)
+    , DB(DB)
     , ui(new Ui::AddBookDialog)
 {
     ui->setupUi(this);
 
     setWindowTitle("Add New Book");
-    setModal(true); // Make it modal
-    setFixedSize(300, 150); // Fixed size
+    setModal(true);
+    setFixedSize(300, 150);
 
     // Create input fields
     titleInput = new QLineEdit(this);
@@ -20,6 +22,10 @@ AddBookDialog::AddBookDialog(QWidget *parent)
     yearInput->setMaximum(QDate::currentDate().year());
     yearInput->clear();
 
+    authorDropdown = new QComboBox(this);
+    populateAuthorDropdown(DB);
+    connect(authorDropdown, QOverload<int>::of(&QComboBox::activated), this, &AddBookDialog::onAuthorChanged);
+
     QPushButton* submitButton = new QPushButton("Submit", this);
     connect(submitButton, &QPushButton::clicked, this, &AddBookDialog::onSubmitClicked);
 
@@ -27,6 +33,7 @@ AddBookDialog::AddBookDialog(QWidget *parent)
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->addWidget(titleInput);
     layout->addWidget(yearInput);
+    layout->addWidget(authorDropdown);
     layout->addWidget(submitButton);
 
     setLayout(layout);
@@ -42,4 +49,28 @@ void AddBookDialog::onSubmitClicked() {
     int year = yearInput->value();
     emit bookSubmitted(title, year);
     this->accept();
+}
+
+void AddBookDialog::populateAuthorDropdown(sqlite3*& DB) {
+    authorDropdown->clear();
+    std::vector<Author> authors = getAuthors(DB);
+
+    for (const Author& author : authors) {
+        authorDropdown->addItem(author.forename + " " + author.surname, QVariant(author.id));
+    }
+
+    authorDropdown->addItem("Add new author...");
+}
+
+void AddBookDialog::onAuthorChanged(int index) {
+    if (authorDropdown->itemText(index) == "Add new author...") {
+        /*AddAuthorDialog dialog(this);
+        if (dialog.exec() == QDialog::Accepted) {
+            populateAuthorDropdown(DB); // refresh list
+            authorDropdown->setCurrentIndex(authorDropdown->count() - 2); // select new author (assumes added last before "Add new author")
+        } else {
+            // Revert selection if cancelled
+            authorDropdown->setCurrentIndex(0);
+        }*/
+    }
 }

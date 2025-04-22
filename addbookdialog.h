@@ -8,6 +8,8 @@
 #include <QPushButton>
 #include <QVboxLayout>
 #include <QDate>
+#include <QComboBox>
+#include <CommonUtil.h>
 
 namespace Ui {
 class AddBookDialog;
@@ -18,11 +20,17 @@ class AddBookDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit AddBookDialog(QWidget *parent = nullptr);
+    explicit AddBookDialog(sqlite3*& DB, QWidget *parent = nullptr);
     ~AddBookDialog();
+
+    void populateAuthorDropdown(sqlite3*& DB);
+    void onAuthorChanged(int index);
 
     QLineEdit* titleInput;
     QSpinBox* yearInput;
+    QComboBox* authorDropdown;
+
+    sqlite3*& DB;
 
 signals:
     void bookSubmitted(const QString& title, int year);
