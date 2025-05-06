@@ -64,13 +64,23 @@ void AddBookDialog::populateAuthorDropdown(sqlite3*& DB) {
 
 void AddBookDialog::onAuthorChanged(int index) {
     if (authorDropdown->itemText(index) == "Add new author...") {
-        /*AddAuthorDialog dialog(this);
-        if (dialog.exec() == QDialog::Accepted) {
-            populateAuthorDropdown(DB); // refresh list
-            authorDropdown->setCurrentIndex(authorDropdown->count() - 2); // select new author (assumes added last before "Add new author")
-        } else {
-            // Revert selection if cancelled
+        AddAuthorDialog* dialog = new AddAuthorDialog(this);
+
+        connect(dialog, &AddAuthorDialog::authorSubmitted, this, [=](QString forename, QString surname, QString bio, QDate birth, QDate death) {
+            addAuthor(DB, forename, surname, bio, birth, death);
+
+            populateAuthorDropdown(DB);
+
+            QString fullName = forename + " " + surname;
+            int newIndex = authorDropdown->findText(fullName);
+            if (newIndex != -1)
+                authorDropdown->setCurrentIndex(newIndex);
+        });
+
+        if (dialog->exec() != QDialog::Accepted) {
             authorDropdown->setCurrentIndex(0);
-        }*/
+        }
+
+        dialog->deleteLater();
     }
 }

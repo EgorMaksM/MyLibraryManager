@@ -11,6 +11,8 @@
 #include <QComboBox>
 #include <CommonUtil.h>
 
+#include "addauthordialog.h"
+
 namespace Ui {
 class AddBookDialog;
 }

@@ -9,6 +9,7 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    addauthordialog.cpp \
     addbookdialog.cpp \
     author.cpp \
     authorviewwidget.cpp \
@@ -27,6 +28,7 @@ SOURCES += \
 
 HEADERS += \
     CommonUtil.h \
+    addauthordialog.h \
     addbookdialog.h \
     author.h \
     authorviewwidget.h \
@@ -43,6 +45,7 @@ HEADERS += \
     userviewwidget.h
 
 FORMS += \
+    addauthordialog.ui \
     addbookdialog.ui \
     authorviewwidget.ui \
     bookviewwidget.ui \

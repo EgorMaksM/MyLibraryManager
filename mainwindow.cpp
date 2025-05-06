@@ -143,7 +143,8 @@ void MainWindow::setupNewBtn() {
 }
 
 void MainWindow::openDialog(int objectType) {  // 0 -> Book; 1 -> Author; 2 -> User
-    if (objectType == 0) {
+    switch (objectType) {
+    case 0: {
         AddBookDialog* dialog = new AddBookDialog(DB, this);
         connect(dialog, &AddBookDialog::bookSubmitted, this, [this](const QString& title, int year){
             int bookID = addBook(DB, title, year);
@@ -153,4 +154,15 @@ void MainWindow::openDialog(int objectType) {  // 0 -> Book; 1 -> Author; 2 -> U
         std::vector<Book> books = getBooks(DB);
         tableWidget->populateTable(books);
     }
+    case 1: {
+        AddAuthorDialog* dialog = new AddAuthorDialog(this);
+        connect(dialog, &AddAuthorDialog::authorSubmitted, this, [this](const QString& forename, const QString& surname, const QString& bio, const QDate& birth, const QDate& death){
+            addAuthor(DB, forename, surname, bio, birth, death);
+        });
+        dialog->exec();
+        std::vector<Author> authors = getAuthors(DB);
+        tableWidget->populateTable(authors);
+    }
+    }
+
 }
