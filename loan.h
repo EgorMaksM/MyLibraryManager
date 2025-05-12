@@ -18,7 +18,7 @@ struct Loan {
 
 bool operator==(const Loan& loan, const Loan& other);
 
-void addLoan(sqlite3*& DB, int user_id, int book_id, QDate q_start, QDate q_end);
+int addLoan(sqlite3*& DB, int user_id, int book_id, QDate q_start, QDate q_end);
 
 std::vector<Loan> getLoans(sqlite3*& DB);
 

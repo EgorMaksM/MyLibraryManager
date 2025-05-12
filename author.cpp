@@ -9,7 +9,7 @@ bool operator==(const Author& author, const Author& other) {
            author.death == other.death;
 }
 
-void addAuthor(sqlite3*& DB, QString forename, QString surname, QString bio, QDate q_birth, QDate q_death) {
+int addAuthor(sqlite3*& DB, QString forename, QString surname, QString bio, QDate q_birth, QDate q_death) {
     sqlite3_stmt* stmt;
     const char* sql = "INSERT INTO AUTHORS (FORENAME, SURNAME, BIO, BIRTH, DEATH) VALUES (?, ?, ?, ?, ?);";
     int exit = 0;
@@ -20,16 +20,16 @@ void addAuthor(sqlite3*& DB, QString forename, QString surname, QString bio, QDa
     exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
     if (exit != SQLITE_OK) {
         qCritical() << "Error preparing SQL statement1: " << sqlite3_errmsg(DB) << "\n";
-        return;
+        return -1;
     }
 
-    sqlite3_bind_text(stmt, 1, forename.toUtf8().constData(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 2, surname.toUtf8().constData(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 1, forename.toUtf8().constData(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, surname.toUtf8().constData(), -1, SQLITE_TRANSIENT);
 
     if (bio.isEmpty()) sqlite3_bind_null(stmt, 3);
-    else sqlite3_bind_text(stmt, 3, bio.toUtf8().constData(), -1, SQLITE_STATIC);
+    else sqlite3_bind_text(stmt, 3, bio.toUtf8().constData(), -1, SQLITE_TRANSIENT);
 
-    sqlite3_bind_text(stmt, 4, birth.toUtf8().constData(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 4, birth.toUtf8().constData(), -1, SQLITE_TRANSIENT);
 
     if (death.isEmpty()) sqlite3_bind_null(stmt, 5);
     else sqlite3_bind_text(stmt, 5, death.toUtf8().constData(), -1, SQLITE_STATIC);
@@ -43,6 +43,8 @@ void addAuthor(sqlite3*& DB, QString forename, QString surname, QString bio, QDa
     }
 
     sqlite3_finalize(stmt);
+
+    return static_cast<int>(sqlite3_last_insert_rowid(DB));
 }
 
 bool getAuthorByID(sqlite3*& DB, int author_id, Author& author) {

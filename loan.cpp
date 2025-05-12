@@ -8,7 +8,7 @@ bool operator==(const Loan& loan, const Loan& other) {
            loan.end == other.end;
 }
 
-void addLoan(sqlite3*& DB, int user_id, int book_id, QDate q_start, QDate q_end) {
+int addLoan(sqlite3*& DB, int user_id, int book_id, QDate q_start, QDate q_end) {
     sqlite3_stmt* stmt;
     const char* sql = "INSERT INTO LOANS (USER_ID, BOOK_ID, START, END) VALUES (?, ?, ?, ?);";
     int exit = 0;
@@ -19,13 +19,13 @@ void addLoan(sqlite3*& DB, int user_id, int book_id, QDate q_start, QDate q_end)
     exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
     if (exit != SQLITE_OK) {
         qCritical() << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
-        return;
+        return -1;
     }
 
     sqlite3_bind_int(stmt, 1, user_id);
     sqlite3_bind_int(stmt, 2, book_id);
-    sqlite3_bind_text(stmt, 3, start.toUtf8().constData(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 4, end.toUtf8().constData(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 3, start.toUtf8().constData(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, end.toUtf8().constData(), -1, SQLITE_TRANSIENT);
 
     exit = sqlite3_step(stmt);
     if (exit != SQLITE_DONE) {
@@ -36,6 +36,8 @@ void addLoan(sqlite3*& DB, int user_id, int book_id, QDate q_start, QDate q_end)
     }
 
     sqlite3_finalize(stmt);
+
+    return static_cast<int>(sqlite3_last_insert_rowid(DB));
 }
 
 std::vector<Loan> getLoans(sqlite3*& DB) {

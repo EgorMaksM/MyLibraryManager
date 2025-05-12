@@ -19,7 +19,7 @@ struct Author {
 
 bool operator==(const Author& author, const Author& other);
 
-void addAuthor(sqlite3*& DB, QString forename, QString surname, QString bio, QDate q_birth, QDate q_death);
+int addAuthor(sqlite3*& DB, QString forename, QString surname, QString bio, QDate q_birth, QDate q_death);
 
 bool getAuthorByID(sqlite3*& DB, int author_id, Author& author);
 std::vector<Author> getAuthors(sqlite3*& DB);

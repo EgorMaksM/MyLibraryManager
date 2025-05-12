@@ -6,6 +6,9 @@
 #include <QDateEdit>
 #include <QVBoxLayout>
 #include <QPushButton>
+#include <QFormLayout>
+#include <QLabel>
+#include <QCheckBox>
 #include <QDialog>
 
 namespace Ui {
@@ -24,6 +27,7 @@ public:
     QLineEdit* surnameInput;
     QTextEdit* bioInput;
     QDateEdit* birthDateInput;
+    QCheckBox* IsDead;
     QDateEdit* deathDateInput;
 
 signals:

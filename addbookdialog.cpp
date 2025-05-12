@@ -1,39 +1,56 @@
 #include "addbookdialog.h"
 #include "author.h"
-#include "ui_addbookdialog.h"
 
 AddBookDialog::AddBookDialog(sqlite3*& DB, QWidget *parent)
     : QDialog(parent)
     , DB(DB)
-    , ui(new Ui::AddBookDialog)
 {
-    ui->setupUi(this);
 
     setWindowTitle("Add New Book");
     setModal(true);
-    setFixedSize(300, 150);
+    this->adjustSize();
 
     // Create input fields
-    titleInput = new QLineEdit(this);
-    titleInput->setPlaceholderText("Enter book title");
+    QFormLayout* formLayout = new QFormLayout;
 
-    yearInput = new QSpinBox(this);
+    titleInput = new QLineEdit();
+
+    yearInput = new QSpinBox();
     yearInput->setMinimum(0);
     yearInput->setMaximum(QDate::currentDate().year());
     yearInput->clear();
 
-    authorDropdown = new QComboBox(this);
-    populateAuthorDropdown(DB);
-    connect(authorDropdown, QOverload<int>::of(&QComboBox::activated), this, &AddBookDialog::onAuthorChanged);
+    authorsLayout = new QVBoxLayout();
+    QHBoxLayout* firstAuthorLayout = new QHBoxLayout();
 
-    QPushButton* submitButton = new QPushButton("Submit", this);
+    authorDropdown = new QComboBox();
+    authorDropdowns.append(authorDropdown);
+    populateAuthorDropdown(DB, authorDropdown);
+    connect(authorDropdown, QOverload<int>::of(&QComboBox::activated),
+            this, [=](int index) {
+                onAuthorChanged(index, authorDropdown);
+            });
+
+    firstAuthorLayout->addWidget(authorDropdown);
+
+    QPushButton* newAuthorButton = new QPushButton("+");
+    connect(newAuthorButton, &QPushButton::clicked, this, &AddBookDialog::addAuthorDropdown);
+    newAuthorButton->setFixedSize(25, 25);
+    firstAuthorLayout->addWidget(newAuthorButton);
+
+    authorsLayout->addLayout(firstAuthorLayout);
+
+    QPushButton* submitButton = new QPushButton("Add The Book", this);
     connect(submitButton, &QPushButton::clicked, this, &AddBookDialog::onSubmitClicked);
 
     // Layout
     QVBoxLayout* layout = new QVBoxLayout(this);
-    layout->addWidget(titleInput);
-    layout->addWidget(yearInput);
-    layout->addWidget(authorDropdown);
+
+    formLayout->addRow("Book's Title:", titleInput);
+    formLayout->addRow("Book's Year of Publication:", yearInput);
+    formLayout->addRow("Book's Author(s):", authorsLayout);
+
+    layout->addLayout(formLayout);
     layout->addWidget(submitButton);
 
     setLayout(layout);
@@ -41,17 +58,18 @@ AddBookDialog::AddBookDialog(sqlite3*& DB, QWidget *parent)
 
 AddBookDialog::~AddBookDialog()
 {
-    delete ui;
+
 }
 
 void AddBookDialog::onSubmitClicked() {
     QString title = titleInput->text();
     int year = yearInput->value();
-    emit bookSubmitted(title, year);
+    QList<int> authorIds = getSelectedAuthorIds();
+    emit bookSubmitted(title, year, authorIds);
     this->accept();
 }
 
-void AddBookDialog::populateAuthorDropdown(sqlite3*& DB) {
+void AddBookDialog::populateAuthorDropdown(sqlite3*& DB, QComboBox* authorDropdown) {
     authorDropdown->clear();
     std::vector<Author> authors = getAuthors(DB);
 
@@ -62,19 +80,24 @@ void AddBookDialog::populateAuthorDropdown(sqlite3*& DB) {
     authorDropdown->addItem("Add new author...");
 }
 
-void AddBookDialog::onAuthorChanged(int index) {
+void AddBookDialog::onAuthorChanged(int index, QComboBox* authorDropdown) {
     if (authorDropdown->itemText(index) == "Add new author...") {
         AddAuthorDialog* dialog = new AddAuthorDialog(this);
 
         connect(dialog, &AddAuthorDialog::authorSubmitted, this, [=](QString forename, QString surname, QString bio, QDate birth, QDate death) {
-            addAuthor(DB, forename, surname, bio, birth, death);
+            int id = addAuthor(DB, forename, surname, bio, birth, death);
 
-            populateAuthorDropdown(DB);
+            for (QComboBox* dropdown : authorDropdowns) {
+                populateAuthorDropdown(DB, dropdown);
+            }
 
-            QString fullName = forename + " " + surname;
-            int newIndex = authorDropdown->findText(fullName);
-            if (newIndex != -1)
-                authorDropdown->setCurrentIndex(newIndex);
+            for (int i = 0; i < authorDropdown->count(); ++i) {
+                QVariant data = authorDropdown->itemData(i);
+                if (data.isValid() && data.toInt() == id) {
+                    authorDropdown->setCurrentIndex(i);
+                    break;
+                }
+            }
         });
 
         if (dialog->exec() != QDialog::Accepted) {
@@ -83,4 +106,55 @@ void AddBookDialog::onAuthorChanged(int index) {
 
         dialog->deleteLater();
     }
+}
+
+void AddBookDialog::addAuthorDropdown() {
+    QHBoxLayout* localLayout = new QHBoxLayout();
+
+    QComboBox* localAuthorDropdown = new QComboBox();
+    populateAuthorDropdown(DB, localAuthorDropdown);
+    connect(authorDropdown, QOverload<int>::of(&QComboBox::activated),
+            this, [=](int index) {
+                onAuthorChanged(index, authorDropdown);
+            });
+
+    QPushButton* deleteAuthorButton = new QPushButton("-");
+    connect(deleteAuthorButton, &QPushButton::clicked, this, [=]() {
+        while (localLayout->count() > 0) {
+            QLayoutItem* item = localLayout->takeAt(0);
+            if (QWidget* widget = item->widget()) {
+                widget->deleteLater();
+            }
+            delete item;
+        }
+
+        authorsLayout->removeItem(localLayout);
+
+        delete localLayout;
+
+        authorsLayout->update();
+        this->adjustSize();
+    });
+    deleteAuthorButton->setFixedSize(25, 25);
+
+    localLayout->addWidget(localAuthorDropdown);
+    localLayout->addWidget(deleteAuthorButton);
+
+    authorsLayout->addLayout(localLayout);
+
+    authorDropdowns.append(localAuthorDropdown);
+}
+
+QList<int> AddBookDialog::getSelectedAuthorIds() const {
+    QList<int> selectedIds;
+
+    for (QComboBox* dropdown : authorDropdowns) {
+        int index = dropdown->currentIndex();
+        if (index != -1 && dropdown->currentText() != "Add new author...") {
+            int authorId = dropdown->itemData(index).toInt();
+            selectedIds.append(authorId);
+        }
+    }
+
+    return selectedIds;
 }

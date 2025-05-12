@@ -15,7 +15,7 @@ struct Genre {
 
 bool operator==(const Genre& genre, const Genre& other);
 
-void addGenre(sqlite3*& DB, QString name);
+int addGenre(sqlite3*& DB, QString name);
 
 bool getGenreByID(sqlite3*& DB, int genre_id, Genre& genre);
 std::vector<Genre> getGenres(sqlite3*& DB);

@@ -90,7 +90,7 @@ void TableViewWidget::populateTable(std::vector<Book> books) {
         if (resultAuthors.size() > 1) {
             QString authorsList;
             for (unsigned long long i = 0; i < resultAuthors.size() - 1; i++) {
-                authorsList += resultAuthors[i].forename + " " + resultAuthors[i].surname = ", ";
+                authorsList += resultAuthors[i].forename + " " + resultAuthors[i].surname + ", ";
             }
             authorsList += resultAuthors.back().forename + " " + resultAuthors.back().surname;
             QTableWidgetItem* authors = new QTableWidgetItem(authorsList);
@@ -111,8 +111,6 @@ void TableViewWidget::populateTable(std::vector<Author> authors) {
     curObjectType = AUTHOR;
     const int rows = authors.size();
     const int cols = 5;
-
-    qDebug() << rows;
 
     gridWidget->setRowCount(rows);
     gridWidget->setColumnCount(cols);
@@ -153,8 +151,6 @@ void TableViewWidget::populateTable(std::vector<User> users) {
     curObjectType = USER;
     const int rows = users.size();
     const int cols = 6;
-
-    qDebug() << rows;
 
     gridWidget->setRowCount(rows);
     gridWidget->setColumnCount(cols);

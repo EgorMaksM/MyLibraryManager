@@ -5,7 +5,7 @@ bool operator==(const Genre& genre, const Genre& other) {
            genre.name == other.name;
 }
 
-void addGenre(sqlite3*& DB, QString name) {
+int addGenre(sqlite3*& DB, QString name) {
     sqlite3_stmt* stmt;
     const char* sql = "INSERT INTO GENRES (NAME) VALUES (?);";
     int exit = 0;
@@ -13,10 +13,10 @@ void addGenre(sqlite3*& DB, QString name) {
     exit = sqlite3_prepare_v2(DB, sql, -1, &stmt, 0);
     if (exit != SQLITE_OK) {
         qCritical() << "Error preparing SQL statement: " << sqlite3_errmsg(DB) << "\n";
-        return;
+        return -1;
     }
 
-    sqlite3_bind_text(stmt, 1, name.toUtf8().constData(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 1, name.toUtf8().constData(), -1, SQLITE_TRANSIENT);
 
     exit = sqlite3_step(stmt);
     if (exit != SQLITE_DONE) {
@@ -27,6 +27,8 @@ void addGenre(sqlite3*& DB, QString name) {
     }
 
     sqlite3_finalize(stmt);
+    
+    return static_cast<int>(sqlite3_last_insert_rowid(DB));
 }
 
 bool getGenreByID(sqlite3*& DB, int genre_id, Genre& genre) {

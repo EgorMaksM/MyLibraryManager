@@ -104,6 +104,8 @@ void MainWindow::onObjectSelected(int row, int column) {
 }
 
 void MainWindow::setupNewBtn() {
+    QHBoxLayout* btnRowLayout = new QHBoxLayout();
+
     QPushButton* dropdownButton = new QPushButton("+", this);
     dropdownButton->setFixedSize(35, 35);
     dropdownButton->setStyleSheet(
@@ -138,21 +140,48 @@ void MainWindow::setupNewBtn() {
     connect(option3, &QAction::triggered, this, [this]() { openDialog(2); });
 
     dropdownButton->setMenu(menu);
+    btnRowLayout->addWidget(dropdownButton);
 
-    controlsLayout->addWidget(dropdownButton, 0, Qt::AlignLeft | Qt::AlignTop);
+    QPushButton* openBooks = new QPushButton("Books", this);
+    QPushButton* openAuthors = new QPushButton("Authors", this);
+    QPushButton* openUsers = new QPushButton("Users", this);
+
+    connect(openBooks, &QPushButton::clicked, this, [this]() {
+        std::vector<Book> books = getBooks(DB);
+        tableWidget->populateTable(books);
+    });
+    connect(openAuthors, &QPushButton::clicked, this, [this]() {
+        std::vector<Author> authors = getAuthors(DB);
+        tableWidget->populateTable(authors);
+    });
+
+    connect(openUsers, &QPushButton::clicked, this, [this]() {
+        std::vector<User> users = getUsers(DB);
+        tableWidget->populateTable(users);
+    });
+
+    // Optional: Add a stretch at the end to push all buttons to the left
+    btnRowLayout->addStretch();
+
+    btnRowLayout->addWidget(openBooks);
+    btnRowLayout->addWidget(openAuthors);
+    btnRowLayout->addWidget(openUsers);
+
+    controlsLayout->addLayout(btnRowLayout);
 }
 
 void MainWindow::openDialog(int objectType) {  // 0 -> Book; 1 -> Author; 2 -> User
     switch (objectType) {
     case 0: {
         AddBookDialog* dialog = new AddBookDialog(DB, this);
-        connect(dialog, &AddBookDialog::bookSubmitted, this, [this](const QString& title, int year){
+        connect(dialog, &AddBookDialog::bookSubmitted, this, [this](const QString& title, int year, QList<int> authorIds){
             int bookID = addBook(DB, title, year);
-            linkAuthorToBook(DB, 1, bookID);
+            for (int authorID : authorIds)
+                linkAuthorToBook(DB, authorID, bookID);
         });
         dialog->exec();
         std::vector<Book> books = getBooks(DB);
-        tableWidget->populateTable(books);
+        break;
     }
     case 1: {
         AddAuthorDialog* dialog = new AddAuthorDialog(this);
@@ -161,7 +190,7 @@ void MainWindow::openDialog(int objectType) {  // 0 -> Book; 1 -> Author; 2 -> U
         });
         dialog->exec();
         std::vector<Author> authors = getAuthors(DB);
-        tableWidget->populateTable(authors);
+        break;
     }
     }
 

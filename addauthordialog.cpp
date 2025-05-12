@@ -9,36 +9,47 @@ AddAuthorDialog::AddAuthorDialog(QWidget *parent)
 
     setWindowTitle("Add New Author");
     setModal(true);
-    setFixedSize(600, 450);
+    this->adjustSize();
 
     // Create input fields
-    forenameInput = new QLineEdit(this);
-    forenameInput->setPlaceholderText("Enter The Author's Forename");
+    QFormLayout* formLayout = new QFormLayout();
+    forenameInput = new QLineEdit();
 
-    surnameInput = new QLineEdit(this);
-    surnameInput->setPlaceholderText("Enter The Author's Surname");
+    surnameInput = new QLineEdit();
 
-    bioInput = new QTextEdit(this);
-    bioInput->setPlaceholderText("Enter The Author's Biography");
+    bioInput = new QTextEdit();
 
-    birthDateInput = new QDateEdit(this);
+    birthDateInput = new QDateEdit();
     birthDateInput->setCalendarPopup(true);
     birthDateInput->setDate(QDate::currentDate());
 
-    deathDateInput = new QDateEdit(this);
+    QVBoxLayout* deathDataLayout = new QVBoxLayout();
+
+    IsDead = new QCheckBox("Is Still Alive");
+    IsDead->setChecked(true);
+
+    deathDateInput = new QDateEdit();
     deathDateInput->setCalendarPopup(true);
     deathDateInput->setDate(QDate::currentDate());
+    deathDateInput->setEnabled(false);
 
-    QPushButton* submitButton = new QPushButton("Submit", this);
+    QObject::connect(IsDead, &QCheckBox::toggled, deathDateInput, &QDateEdit::setDisabled);
+
+    deathDataLayout->addWidget(IsDead);
+    deathDataLayout->addWidget(deathDateInput);
+
+    QPushButton* submitButton = new QPushButton("Add The Author", this);
     connect(submitButton, &QPushButton::clicked, this, &AddAuthorDialog::onSubmitClicked);
 
     // Layout
     QVBoxLayout* layout = new QVBoxLayout(this);
-    layout->addWidget(forenameInput);
-    layout->addWidget(surnameInput);
-    layout->addWidget(bioInput);
-    layout->addWidget(birthDateInput);
-    layout->addWidget(deathDateInput);
+    formLayout->addRow("Author's Forename:", forenameInput);
+    formLayout->addRow("Author's Surname:", surnameInput);
+    formLayout->addRow("Author's Biography(Optional):", bioInput);
+    formLayout->addRow("Author's Birth Date:", birthDateInput);
+    formLayout->addRow("Author's Death Date:", deathDataLayout);
+
+    layout->addLayout(formLayout);
     layout->addWidget(submitButton);
 
     setLayout(layout);
@@ -49,7 +60,8 @@ void AddAuthorDialog::onSubmitClicked() {
     QString surname = surnameInput->text();
     QString bio = bioInput->toPlainText();
     QDate birth = birthDateInput->date();
-    QDate death = deathDateInput->date();
+    QDate death = QDate();
+    if (!IsDead->isChecked()) death = deathDateInput->date();
     emit authorSubmitted(forename, surname, bio, birth, death);
     this->accept();
 }

@@ -21,13 +21,12 @@ int addUser(sqlite3*& DB, QString forename, QString surname, QDate q_birth, QStr
         return -1;
     }
 
-    sqlite3_bind_text(stmt, 1, forename.toUtf8().constData(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 2, surname.toUtf8().constData(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 3, birth.toUtf8().constData(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 4, email.toUtf8().constData(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 1, forename.toUtf8().constData(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, surname.toUtf8().constData(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, birth.toUtf8().constData(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, email.toUtf8().constData(), -1, SQLITE_TRANSIENT);
     if (phone.isEmpty()) sqlite3_bind_null(stmt, 5);
-    else sqlite3_bind_text(stmt, 5, phone.toUtf8().constData(), -1, SQLITE_STATIC);
-    //sqlite3_bind_text(stmt, 5, phone.toUtf8().constData(), -1, SQLITE_STATIC);
+    else sqlite3_bind_text(stmt, 5, phone.toUtf8().constData(), -1, SQLITE_TRANSIENT);
 
     exit = sqlite3_step(stmt);
     if (exit != SQLITE_DONE) {

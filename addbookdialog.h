@@ -9,6 +9,10 @@
 #include <QVboxLayout>
 #include <QDate>
 #include <QComboBox>
+#include <QTimer>
+#include <QLabel>
+#include <QFormLayout>
+#include <QSignalBlocker>
 #include <CommonUtil.h>
 
 #include "addauthordialog.h"
@@ -25,8 +29,10 @@ public:
     explicit AddBookDialog(sqlite3*& DB, QWidget *parent = nullptr);
     ~AddBookDialog();
 
-    void populateAuthorDropdown(sqlite3*& DB);
-    void onAuthorChanged(int index);
+    void populateAuthorDropdown(sqlite3*& DB, QComboBox* authorDropdown);
+    void onAuthorChanged(int index, QComboBox* authorDropdown);
+
+    QList<int> getSelectedAuthorIds() const;
 
     QLineEdit* titleInput;
     QSpinBox* yearInput;
@@ -35,10 +41,13 @@ public:
     sqlite3*& DB;
 
 signals:
-    void bookSubmitted(const QString& title, int year);
+    void bookSubmitted(const QString& title, int year, QList<int> authorIds);
 
 private:
-    Ui::AddBookDialog *ui;
+    QVBoxLayout* authorsLayout;
+    QList<QComboBox*> authorDropdowns;
+
+    void addAuthorDropdown();
 
 private slots:
     void onSubmitClicked();

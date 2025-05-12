@@ -93,7 +93,7 @@ void BookViewWidget::openBook(sqlite3*& DB, Book& book) {
         authorFieldLabel->setText("Authors:");
         QString newAuthorsList;
         for (unsigned long long i = 0; i < resultAuthors.size() - 1; i++) {
-            newAuthorsList += resultAuthors[i].forename + " " + resultAuthors[i].surname = ", ";
+            newAuthorsList += resultAuthors[i].forename + " " + resultAuthors[i].surname + ", ";
         }
         newAuthorsList += resultAuthors.back().forename + " " + resultAuthors.back().surname;
         authorValueLabel->setText(newAuthorsList);

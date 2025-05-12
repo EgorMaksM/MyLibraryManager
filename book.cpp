@@ -17,7 +17,7 @@ int addBook(sqlite3*& DB, QString title, unsigned short int year) {
         return -1;
     }
 
-    sqlite3_bind_text(stmt, 1, title.toUtf8().constData(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 1, title.toUtf8().constData(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, year);
 
     exit = sqlite3_step(stmt);
